@@ -1,0 +1,43 @@
+{
+  "name": "orderly-sdk",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
+    "lint:fix": "eslint --fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@gitlab.com/orderly-network/sdk.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://gitlab.com/orderly-network/sdk/issues"
+  },
+  "homepage": "https://gitlab.com/orderly-network/sdk#readme",
+  "devDependencies": {
+    "@types/node": "^18.7.11",
+    "@typescript-eslint/eslint-plugin": "^5.34.0",
+    "eslint": "^8.22.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-simple-import-sort": "^7.0.0",
+    "prettier": "^2.7.1",
+    "typescript": "^4.7.4"
+  },
+  "dependencies": {
+    "btoa": "^1.2.1",
+    "dotenv": "^16.0.1",
+    "elliptic": "^6.5.4",
+    "keccak256": "^1.0.6",
+    "near-api-js": "^0.45.1"
+  },
+  "files": [
+    "lib"
+  ]
+}
