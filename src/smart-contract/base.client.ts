@@ -15,24 +15,7 @@ export abstract class BaseClient<T> {
     private contractName: string,
     private contractOptions: ContractMethods,
   ) {
-    this.checkVariables();
-    this.networkId = NearNetworkId[process.env.NEAR_NETWORK_ID];
-  }
-
-  private checkVariables() {
-    if (!process.env.NEAR_NETWORK_ID || !Object.keys(NearNetworkId).includes(process.env.NEAR_NETWORK_ID)) {
-      throw Error(
-        'NEAR_NETWORK_ID variable is not set or wrong, please add it to your env file. If you have already done that check its value, which must be one of the following: testnet, mainnet or betanet',
-      );
-    }
-
-    if (!process.env.NEAR_PRIVATE_KEY) {
-      throw Error('NEAR_PRIVATE_KEY variable is not set. Please add it to your env file.');
-    }
-
-    if (!process.env.NEAR_ACCOUNT_ID) {
-      throw Error('NEAR_ACCOUNT_ID variable is not set. Please add it to your env file.');
-    }
+    this.networkId = NearNetworkId[process.env.NETWORK_ID];
   }
 
   async connect() {
@@ -44,17 +27,17 @@ export abstract class BaseClient<T> {
       ...this.config,
     });
 
-    this.account = new Account(this.near.connection, process.env.NEAR_ACCOUNT_ID);
+    this.account = new Account(this.near.connection, process.env.ORDERLY_ACCOUNT_ID);
 
     this.contract = new Contract(this.account, this.contractName, this.contractOptions);
   }
 
   private async createKeyStore() {
-    const keyPair = KeyPair.fromString(process.env.NEAR_PRIVATE_KEY);
+    const keyPair = KeyPair.fromString(process.env.ORDERLY_SECRET);
 
     this.keyStore = new keyStores.InMemoryKeyStore();
 
-    await this.keyStore.setKey(this.networkId, process.env.NEAR_ACCOUNT_ID, keyPair);
+    await this.keyStore.setKey(this.networkId, process.env.ORDERLY_ACCOUNT_ID, keyPair);
   }
 
   protected getContract(): Contract & T {

@@ -10,9 +10,9 @@ interface AssetManagerContractMethods {
   // Authentication/registration
   user_account_exists: (params: CallMethodSignature<{ user: string }>) => Promise<boolean>;
   create_user_account: (params: CallMethodSignature<Record<string, never>>) => Promise<void>;
-  is_orderly_key_announced: (params: CallMethodSignature<{ user: string }>) => Promise<boolean>;
+  is_orderly_key_announced: (params: CallMethodSignature<{ user: string; orderly_key: string }>) => Promise<boolean>;
   user_announce_key: (params: CallMethodSignature<Record<string, never>>) => Promise<void>;
-  is_trading_key_set: (params: CallMethodSignature<{ user: string }>) => Promise<boolean>;
+  is_trading_key_set: (params: CallMethodSignature<{ user: string; orderly_key: string }>) => Promise<boolean>;
   user_request_set_trading_key: (params: CallMethodSignature<{ key: string }>) => Promise<void>;
   // Deposit
   user_deposit_native_token: (params: CallMethodSignature<{ amount: number }>) => Promise<any>;
@@ -30,7 +30,7 @@ interface AssetManagerContractMethods {
 
 export class AssetManagerClient extends BaseClient<AssetManagerContractMethods> {
   constructor(config: Omit<ConnectConfig, 'keyStore' | 'networkId'>) {
-    super(config, 'asset-manager.orderly.testnet', {
+    super(config, `asset-manager.orderly.${process.env.NETWORK_ID}`, {
       viewMethods: [],
       changeMethods: [
         // Authentication/registration
@@ -68,6 +68,7 @@ export class AssetManagerClient extends BaseClient<AssetManagerContractMethods> 
     const isKeyAnnounced = await this.getContract().is_orderly_key_announced({
       args: {
         user: this.getContract().account.accountId,
+        orderly_key: process.env.ORDERLY_KEY,
       },
     });
 
@@ -78,7 +79,7 @@ export class AssetManagerClient extends BaseClient<AssetManagerContractMethods> 
 
   async setTradingKey(): Promise<{ publicKey: string; privateKey: string; tradingKey: string }> {
     const tradingKeyIsSet = await this.getContract().is_trading_key_set({
-      args: { user: this.getContract().account.accountId },
+      args: { user: this.getContract().account.accountId, orderly_key: process.env.ORDERLY_KEY },
     });
 
     if (tradingKeyIsSet) {
