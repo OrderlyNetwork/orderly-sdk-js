@@ -1,7 +1,7 @@
 import { Account, connect, ConnectConfig, KeyPair, keyStores, Near } from 'near-api-js';
 import { Contract, ContractMethods } from 'near-api-js/lib/contract';
 
-import { NearNetworkId } from './near-network-id.enum';
+import { NearNetworkId } from './enums/near-network-id.enum';
 
 export abstract class BaseClient<T> {
   private networkId: NearNetworkId;
@@ -18,7 +18,7 @@ export abstract class BaseClient<T> {
     this.networkId = NearNetworkId[process.env.NETWORK_ID];
   }
 
-  async connect() {
+  protected async _connect() {
     await this.createKeyStore();
 
     this.near = await connect({

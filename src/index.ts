@@ -1,40 +1,63 @@
 import 'dotenv/config';
 
-import { ConnectConfig } from 'near-api-js';
-
 import { AssetManagerClient } from './smart-contract/asset-manager.client';
-import { NearNetworkId } from './smart-contract/near-network-id.enum';
+import { NearNetworkId } from './smart-contract/enums/near-network-id.enum';
+import { ParameterNotFoundError } from './smart-contract/errors';
+import { ConnectionOptions } from './smart-contract/interfaces';
 
 class OrderlyClient {
   private assetManagerClient: AssetManagerClient;
 
-  constructor(config: Omit<ConnectConfig, 'keyStore' | 'networkId'>) {
-    this.checkEnvironment();
+  private networkId: NearNetworkId;
+  private accountId: string;
+  private publicKey: string;
+  private secretKey: string;
 
-    this.assetManagerClient = new AssetManagerClient(config);
+  constructor(options?: ConnectionOptions) {
+    this.checkEnvironment(options);
   }
 
-  private checkEnvironment() {
-    if (!process.env.NETWORK_ID || !Object.keys(NearNetworkId).includes(process.env.NETWORK_ID)) {
-      throw Error(
-        'NETWORK_ID variable is not set or wrong, please add it to your env file. If you have already done that check its value, which must be one of the following: testnet, mainnet or betanet',
-      );
+  private checkEnvironment(options?: ConnectionOptions) {
+    this.networkId = NearNetworkId[options.networkId ?? process.env.NETWORK_ID];
+    this.accountId = options.accountId ?? process.env.ORDERLY_ACCOUNT_ID;
+    this.publicKey = options.publicKey ?? process.env.ORDERLY_KEY;
+    this.secretKey = options.secretKey ?? process.env.ORDERLY_SECRET;
+
+    if (!this.networkId) {
+      throw new ParameterNotFoundError('Network ID');
     }
 
-    if (!process.env.ORDERLY_KEY) {
-      throw Error('ORDERLY_KEY variable is not set. Please add it to your env file.');
+    if (!this.accountId) {
+      throw new ParameterNotFoundError('Account ID');
     }
 
-    if (!process.env.ORDERLY_SECRET) {
-      throw Error('ORDERLY_SECRET variable is not set. Please add it to your env file.');
+    if (!this.publicKey) {
+      throw new ParameterNotFoundError('Public key');
     }
 
-    if (!process.env.ORDERLY_ACCOUNT_ID) {
-      throw Error('ORDERLY_ACCOUNT_ID variable is not set. Please add it to your env file.');
+    if (!this.secretKey) {
+      throw new ParameterNotFoundError('Secret key');
     }
+  }
+
+  async connect(): Promise<void> {
+    this.assetManagerClient = new AssetManagerClient({
+      nodeUrl: `https://rpc.${process.env.NETWORK_ID}.near.org`,
+      walletUrl: `https://wallet.${process.env.NETWORK_ID}.near.org`,
+      helperUrl: `https://helper.${process.env.NETWORK_ID}.near.org`,
+      headers: {},
+    });
+
+    /* const tradingKey = */ await this.assetManagerClient.connect();
+
+    // this.rest = new RestClient(tradingKey);
   }
 
   get assetManager() {
+    if (!this.assetManagerClient) {
+      throw new Error('Call connect method, before accessing the API');
+    }
+
     return this.assetManagerClient;
   }
 }
