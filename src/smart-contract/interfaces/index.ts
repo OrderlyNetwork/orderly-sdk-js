@@ -1,1 +1,1 @@
-export * from './connection-options';
+export * from './sdk-configuration-options';

@@ -57,3 +57,6 @@ Orderly SDK client incapsulates three clients:
 * `assetManager.isTokenListed(token: string)` - use this method to check if token is whitelisted for your account on the contract.
 * `assetManager.isSymbolPairListed(pair: string)` - use this method to check if symbol pair is whitelisted for your account on the contract.
 * `assetManager.getPossibleTokens()` - use this method to get all whitelisted tokens for your account on the contract.
+
+#### Faucet contract
+* `getTokens()`

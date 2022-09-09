@@ -4,6 +4,7 @@ import keccak256 from 'keccak256';
 import { ConnectConfig } from 'near-api-js';
 
 import { BaseClient } from './base.client';
+import { SDKConfigurationOptions } from './interfaces';
 import { CallMethodSignature } from './interfaces/call-method-signature';
 import {
   DepositFungibleTokenRequest,
@@ -36,8 +37,8 @@ interface AssetManagerContractMethods {
 }
 
 export class AssetManagerClient extends BaseClient<AssetManagerContractMethods> {
-  constructor(config: Omit<ConnectConfig, 'keyStore' | 'networkId'>) {
-    super(config, `asset-manager.orderly.${process.env.NETWORK_ID}`, {
+  constructor(private SDKConfig: SDKConfigurationOptions, config: Omit<ConnectConfig, 'keyStore' | 'networkId'>) {
+    super(SDKConfig, config, `asset-manager.orderly.${SDKConfig.networkId}`, {
       viewMethods: [],
       changeMethods: [
         // Authentication/registration
@@ -76,7 +77,7 @@ export class AssetManagerClient extends BaseClient<AssetManagerContractMethods> 
     const isKeyAnnounced = await this.getContract().is_orderly_key_announced({
       args: {
         user: this.getContract().account.accountId,
-        orderly_key: process.env.ORDERLY_KEY,
+        orderly_key: this.SDKConfig.publicKey,
       },
     });
 
@@ -87,7 +88,7 @@ export class AssetManagerClient extends BaseClient<AssetManagerContractMethods> 
 
   private async setTradingKey(): Promise<string> {
     const tradingKeyIsSet = await this.getContract().is_trading_key_set({
-      args: { user: this.getContract().account.accountId, orderly_key: process.env.ORDERLY_KEY },
+      args: { user: this.getContract().account.accountId, orderly_key: this.SDKConfig.publicKey },
     });
 
     if (tradingKeyIsSet) {

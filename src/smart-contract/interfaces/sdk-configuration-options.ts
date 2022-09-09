@@ -1,6 +1,6 @@
 import { NearNetworkId } from '../enums';
 
-export interface ConnectionOptions {
+export interface SDKConfigurationOptions {
   networkId: keyof typeof NearNetworkId;
   accountId: string;
   publicKey: string;
