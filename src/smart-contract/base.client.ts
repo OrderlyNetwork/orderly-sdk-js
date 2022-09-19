@@ -1,7 +1,8 @@
 import { Account, connect, ConnectConfig, KeyPair, keyStores, Near } from 'near-api-js';
 import { Contract, ContractMethods } from 'near-api-js/lib/contract';
 
-import { NearNetworkId } from './near-network-id.enum';
+import { NearNetworkId } from './enums/near-network-id.enum';
+import { SDKConfigurationOptions } from './interfaces';
 
 export abstract class BaseClient<T> {
   private networkId: NearNetworkId;
@@ -11,14 +12,15 @@ export abstract class BaseClient<T> {
   private contract: Contract;
 
   constructor(
+    private sdkConfig: SDKConfigurationOptions,
     private config: Omit<ConnectConfig, 'keyStore' | 'networkId'>,
     private contractName: string,
     private contractOptions: ContractMethods,
   ) {
-    this.networkId = NearNetworkId[process.env.NETWORK_ID];
+    this.networkId = NearNetworkId[this.sdkConfig.networkId];
   }
 
-  async connect() {
+  protected async _connect() {
     await this.createKeyStore();
 
     this.near = await connect({
@@ -27,17 +29,17 @@ export abstract class BaseClient<T> {
       ...this.config,
     });
 
-    this.account = new Account(this.near.connection, process.env.ORDERLY_ACCOUNT_ID);
+    this.account = new Account(this.near.connection, this.sdkConfig.accountId);
 
     this.contract = new Contract(this.account, this.contractName, this.contractOptions);
   }
 
   private async createKeyStore() {
-    const keyPair = KeyPair.fromString(process.env.ORDERLY_SECRET);
+    const keyPair = KeyPair.fromString(this.sdkConfig.secretKey);
 
     this.keyStore = new keyStores.InMemoryKeyStore();
 
-    await this.keyStore.setKey(this.networkId, process.env.ORDERLY_ACCOUNT_ID, keyPair);
+    await this.keyStore.setKey(this.networkId, this.sdkConfig.accountId, keyPair);
   }
 
   protected getContract(): Contract & T {
