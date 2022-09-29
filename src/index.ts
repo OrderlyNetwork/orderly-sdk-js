@@ -2,22 +2,24 @@ import 'dotenv/config';
 
 import pino from 'pino';
 
+import { NearNetworkId } from './enums/near-network-id.enum';
+import { ParameterNotFoundError } from './errors';
+import { SDKConfigurationOptions } from './interfaces/configuration';
 import { getLogger } from './logger';
-import { AssetManagerClient } from './smart-contract/asset-manager.client';
-import { NearNetworkId } from './smart-contract/enums/near-network-id.enum';
-import { ParameterNotFoundError } from './smart-contract/errors';
-import { FaucetClient } from './smart-contract/faucet.client';
-import { SDKConfigurationOptions } from './smart-contract/interfaces';
+import { RestClient, RestType } from './rest';
+import { SmartContractClient, SmartContractType } from './smart-contract';
 
 class OrderlyClient {
-  private assetManagerClient: AssetManagerClient;
-  private faucetClient: FaucetClient;
+  private smartContractClient: SmartContractClient;
+  private restClient: RestClient;
 
   private config: SDKConfigurationOptions;
   private logger: pino.BaseLogger;
 
   constructor(options?: SDKConfigurationOptions) {
     this.checkEnvironment(options);
+
+    this.smartContractClient = new SmartContractClient(this.config);
   }
 
   private checkEnvironment(config?: SDKConfigurationOptions) {
@@ -59,46 +61,20 @@ class OrderlyClient {
   }
 
   async connect(): Promise<void> {
-    this.assetManagerClient = new AssetManagerClient(this.config, {
-      nodeUrl: `https://rpc.${this.config.networkId}.near.org`,
-      walletUrl: `https://wallet.${this.config.networkId}.near.org`,
-      helperUrl: `https://helper.${this.config.networkId}.near.org`,
-      headers: {},
-    });
+    const tradingKey = await this.smartContractClient.connect();
 
-    this.logger.debug('Initialized Asset Manager Client');
-
-    this.faucetClient = new FaucetClient(this.config, {
-      nodeUrl: 'https://rpc.testnet.near.org',
-      walletUrl: 'https://wallet.testnet.near.org',
-      helperUrl: 'https://helper.testnet.near.org',
-      headers: {},
-    });
-
-    this.logger.debug('Initialized Faucet Client');
-
-    /* const tradingKey = */ await this.assetManagerClient.connect();
-
-    await this.faucetClient.connect();
-
-    // this.rest = new RestClient(tradingKey);
+    this.restClient = new RestClient(this.config.networkId, tradingKey);
   }
 
-  get assetManager() {
-    if (!this.assetManagerClient) {
-      throw new Error('Call connect method, before accessing the API');
-    }
-
-    return this.assetManagerClient;
+  get smartContract(): SmartContractType {
+    return this.smartContractClient.smartContract;
   }
 
-  get faucet() {
-    if (!this.faucetClient) {
-      throw new Error('Call connect method, before accessing the API');
-    }
-
-    return this.faucetClient;
+  get rest(): RestType {
+    return this.restClient.rest;
   }
 }
+
+export * as entities from './entities';
 
 export default OrderlyClient;

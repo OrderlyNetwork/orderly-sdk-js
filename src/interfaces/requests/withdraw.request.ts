@@ -1,4 +1,4 @@
-import { CallMethodSignature } from '../call-method-signature';
+import { CallMethodSignature } from '../utils/call-method-signature';
 
 /**
  * Withdraw call params

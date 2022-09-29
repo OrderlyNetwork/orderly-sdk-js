@@ -1,10 +1,11 @@
 import { Account, connect, ConnectConfig, KeyPair, keyStores, Near } from 'near-api-js';
 import { Contract, ContractMethods } from 'near-api-js/lib/contract';
 
-import { NearNetworkId } from './enums/near-network-id.enum';
-import { SDKConfigurationOptions } from './interfaces';
+import { NearNetworkId } from '../../enums/near-network-id.enum';
+import { SDKConfigurationOptions } from '../../interfaces/configuration';
+import { GenericClient } from './generic-client';
 
-export abstract class BaseClient<T> {
+export abstract class GenericSmartContractClient<T> extends GenericClient {
   private networkId: NearNetworkId;
   private near: Near;
   private keyStore: keyStores.InMemoryKeyStore;
@@ -12,11 +13,14 @@ export abstract class BaseClient<T> {
   private contract: Contract;
 
   constructor(
+    clientName: string,
     private sdkConfig: SDKConfigurationOptions,
     private config: Omit<ConnectConfig, 'keyStore' | 'networkId'>,
     private contractName: string,
     private contractOptions: ContractMethods,
   ) {
+    super(clientName, sdkConfig.debug);
+
     this.networkId = NearNetworkId[this.sdkConfig.networkId];
   }
 
