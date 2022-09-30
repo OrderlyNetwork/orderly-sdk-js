@@ -5,8 +5,8 @@ import { RestConfigurationOptions } from '../../interfaces/configuration';
 import {
   GetAvailableSymbolsResponse,
   GetFeeInformationResponse,
+  GetMarketTradesResponse,
   GetSymbolOrderRulesResponse,
-  GetTradesResponse,
 } from '../../interfaces/responses';
 import { FailedApiResponse, GenericClient } from '../../interfaces/utils';
 
@@ -145,7 +145,7 @@ export class PublicClient extends GenericClient {
       },
       getMarketTrades: async (symbol, limit = 10) => {
         try {
-          const { data: response } = await this.instance.get<GetTradesResponse>('public/market_trades', {
+          const { data: response } = await this.instance.get<GetMarketTradesResponse>('public/market_trades', {
             params: {
               symbol,
               limit,
