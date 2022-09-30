@@ -1,7 +1,7 @@
 import axios, { AxiosError, AxiosInstance } from 'axios';
 
 import { Order } from '../../entities';
-import { TradingConfigurationOptions } from '../../interfaces/configuration';
+import { AuthorizedConfigurationOptions } from '../../interfaces/configuration';
 import {
   CancelOrderRequest,
   CancelOrdersRequest,
@@ -81,7 +81,7 @@ export type OrdersType = {
 export class OrdersClient extends GenericClient {
   private instance: AxiosInstance;
 
-  constructor(private config: TradingConfigurationOptions, debug = false) {
+  constructor(private config: AuthorizedConfigurationOptions, debug = false) {
     super('Orders REST Client', debug);
 
     this.instance = axios.create({

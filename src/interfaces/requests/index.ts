@@ -4,6 +4,7 @@ export * from './create-batch-order.request';
 export * from './create-order.request';
 export * from './deposit.request';
 export * from './empty.request';
+export * from './get-asset-history.request';
 export * from './get-kline.request';
 export * from './get-order.request';
 export * from './get-orders.request';

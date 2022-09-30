@@ -1,6 +1,6 @@
 import { RestConfigurationOptions } from './rest-configuration-options';
 
-export interface TradingConfigurationOptions extends RestConfigurationOptions {
+export interface AuthorizedConfigurationOptions extends RestConfigurationOptions {
   orderlyKey: string;
 
   orderlySecret: string;

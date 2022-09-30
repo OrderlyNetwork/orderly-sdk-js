@@ -1,7 +1,7 @@
 import axios, { AxiosError, AxiosInstance } from 'axios';
 
 import { Kline, OrderTrade } from '../../entities';
-import { TradingConfigurationOptions } from '../../interfaces/configuration';
+import { AuthorizedConfigurationOptions } from '../../interfaces/configuration';
 import { GetKlineRequest } from '../../interfaces/requests';
 import {
   GetKlineResponse,
@@ -44,7 +44,7 @@ export type TradeType = {
 export class TradeClient extends GenericClient {
   private instance: AxiosInstance;
 
-  constructor(private config: TradingConfigurationOptions, debug = false) {
+  constructor(private config: AuthorizedConfigurationOptions, debug = false) {
     super('Trade REST Client', debug);
 
     this.instance = axios.create({
