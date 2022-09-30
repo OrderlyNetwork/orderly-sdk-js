@@ -43,11 +43,11 @@ export type PublicType = {
 export class PublicClient extends GenericClient {
   private instance: AxiosInstance;
 
-  constructor(config: RestConfigurationOptions, debug = false) {
+  constructor(private config: RestConfigurationOptions, debug = false) {
     super('Public REST Client', debug);
 
     this.instance = axios.create({
-      baseURL: `${config.apiUrl}/${config.apiVersion}`,
+      baseURL: `${this.config.apiUrl}/${this.config.apiVersion}`,
     });
   }
 

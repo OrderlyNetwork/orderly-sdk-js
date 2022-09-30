@@ -63,7 +63,7 @@ class OrderlyClient {
   async connect(): Promise<void> {
     const tradingKey = await this.smartContractClient.connect();
 
-    this.restClient = new RestClient(this.config.networkId, tradingKey);
+    this.restClient = new RestClient(this.config, tradingKey);
   }
 
   get smartContract(): SmartContractType {
