@@ -4,6 +4,7 @@ export * from './create-order.response';
 export * from './get-available-symbols.response';
 export * from './get-fee-information.response';
 export * from './get-order.response';
+export * from './get-orderbook.response';
 export * from './get-orders.response';
 export * from './get-symbol-order-rules.response';
 export * from './get-trades.response';

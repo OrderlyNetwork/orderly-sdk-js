@@ -16,8 +16,10 @@ import {
   CreateBatchOrderResponse,
   CreateOrderData,
   CreateOrderResponse,
+  GetOrderbookResponse,
   GetOrderResponse,
   GetOrdersResponse,
+  OrderbookData,
 } from '../../interfaces/responses';
 import { FailedApiResponse, GenericClient, ValidationResponse } from '../../interfaces/utils';
 
@@ -66,6 +68,14 @@ export type OrdersType = {
    * @link https://docs-api.orderly.network/#get-orders
    */
   getOrders: (params: GetOrdersRequest) => Promise<Order[]>;
+
+  /**
+   * Get orderbook
+   * Snapshot of current orderbook. Price of asks/bids are in descending order.
+   *
+   * @link https://docs-api.orderly.network/#orderbook-snapshot
+   */
+  getOrderbook: (symbol: string, maxLevel?: number) => Promise<OrderbookData>;
 };
 
 export class OrdersClient extends GenericClient {
@@ -307,6 +317,40 @@ export class OrdersClient extends GenericClient {
             this.logger.error(err.toJSON(), 'Get orders failed');
           } else {
             this.logger.error(error.message, 'Get orders failed');
+          }
+
+          throw error;
+        }
+      },
+      getOrderbook: async (symbol, maxLevel = 100) => {
+        try {
+          const { data: response } = await this.instance.get<GetOrderbookResponse>(`orderbook/${symbol}`, {
+            params: {
+              max_level: maxLevel,
+            },
+          });
+
+          return response.data;
+        } catch (error) {
+          if (error instanceof AxiosError) {
+            const err = error as AxiosError<FailedApiResponse>;
+
+            if (err.response) {
+              const { data } = err.response;
+
+              this.logger.error(`Get orderbook failed: ${data.message}`);
+
+              throw new Error(
+                JSON.stringify({
+                  code: data.code,
+                  message: data.message,
+                }),
+              );
+            }
+
+            this.logger.error(err.toJSON(), 'Get orderbook failed');
+          } else {
+            this.logger.error(error.message, 'Get orderbook failed');
           }
 
           throw error;
