@@ -2,6 +2,9 @@ import {
   DepositFungibleTokenRequest,
   DepositNearRequest,
   EmptyRequest,
+  StorageDepositRequest,
+  StorageUnregisterRequest,
+  StorageWithdrawRequest,
   UserKeyRequest,
   WithdrawRequest,
 } from '../../../interfaces/requests';
@@ -11,41 +14,47 @@ export const AssetManagerContractMethodsList = {
   viewMethods: [],
   changeMethods: [
     // Authentication/registration
-    'user_account_exists',
-    'create_user_account',
-    'is_orderly_key_announced',
+    'storage_deposit',
     'user_announce_key',
-    'is_trading_key_set',
     'user_request_set_trading_key',
     // Deposit
     'user_deposit_native_token',
     'ft_transfer_call',
     // Withdrawal
     'user_request_withdraw',
+    'storage_withdraw',
+    'storage_unregister',
     // Data access
     'is_token_listed',
     'get_listed_tokens',
+    'user_account_exists',
+    'storage_balance_of',
     'is_symbol_listed',
     'get_user_trading_key',
+    'is_orderly_key_announced',
+    'is_trading_key_set',
   ],
 };
 
 export interface AssetManagerContractMethods {
   // Authentication/registration
-  user_account_exists: (params: CallMethodSignature<{ user: string }>) => Promise<boolean>;
-  create_user_account: (params: EmptyRequest) => Promise<void>;
-  is_orderly_key_announced: (params: UserKeyRequest) => Promise<boolean>;
+  storage_deposit: (params: StorageDepositRequest) => Promise<void>;
   user_announce_key: (params: EmptyRequest) => Promise<void>;
-  is_trading_key_set: (params: UserKeyRequest) => Promise<boolean>;
   user_request_set_trading_key: (params: CallMethodSignature<{ key: string }>) => Promise<void>;
   // Deposit
   user_deposit_native_token: (params: DepositNearRequest) => Promise<any>;
   ft_transfer_call: (params: DepositFungibleTokenRequest) => Promise<any>;
   // Withdrawal
   user_request_withdraw: (params: WithdrawRequest) => Promise<any>;
+  storage_withdraw: (params: StorageWithdrawRequest) => Promise<any>;
+  storage_unregister: (params: StorageUnregisterRequest) => Promise<any>;
   // Data access
   is_token_listed: (params: CallMethodSignature<{ token: string }>) => Promise<boolean>;
   get_listed_tokens: (params: EmptyRequest) => Promise<any>;
+  user_account_exists: (params: CallMethodSignature<{ user: string }>) => Promise<boolean>;
+  storage_balance_of: (params: CallMethodSignature<{ account_id: string }>) => Promise<number>;
   is_symbol_listed: (params: CallMethodSignature<{ pair_symbol: string }>) => Promise<boolean>;
   get_user_trading_key: (params: UserKeyRequest) => Promise<string>;
+  is_orderly_key_announced: (params: UserKeyRequest) => Promise<boolean>;
+  is_trading_key_set: (params: UserKeyRequest) => Promise<boolean>;
 }

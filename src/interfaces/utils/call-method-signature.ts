@@ -7,12 +7,12 @@ export interface CallMethodSignature<T> {
   /**
    * Attached gas
    */
-  gas?: number;
+  gas?: string;
 
   /**
    * Attached deposit in yoctoNEAR
    */
-  amount?: number;
+  amount?: string;
 
   /**
    * callbackUrl after the transaction approved
