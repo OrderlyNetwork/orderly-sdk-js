@@ -10,5 +10,8 @@ export * from './get-order.request';
 export * from './get-orders.request';
 export * from './get-tokens.request';
 export * from './get-trades.request';
+export * from './storage-deposit.request';
+export * from './storage-unregister.request';
+export * from './storage-withdraw.request';
 export * from './user-key.request';
 export * from './withdraw.request';

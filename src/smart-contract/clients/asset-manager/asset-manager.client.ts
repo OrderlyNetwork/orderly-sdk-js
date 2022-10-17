@@ -1,12 +1,39 @@
 import btoa from 'btoa';
 import { ec as EC } from 'elliptic';
 import keccak256 from 'keccak256';
-import { ConnectConfig } from 'near-api-js';
+import { ConnectConfig, utils } from 'near-api-js';
 
 import { SDKConfigurationOptions } from '../../../interfaces/configuration';
 import { DepositParams, WithdrawParams } from '../../../interfaces/requests';
 import { GenericSmartContractClient } from '../../../interfaces/utils';
 import { AssetManagerContractMethods, AssetManagerContractMethodsList } from './asset-manager.methods';
+
+type AssetManagerStorageType = {
+  /**
+   * Function to deposit NEAR to the account storage
+   *
+   * Pass amount as NEAR value, it will be converted to yoctoNEAR automatically
+   */
+  deposit: (amount: number) => Promise<any>;
+
+  /**
+   * Function to withdraw NEAR from the account storage
+   *
+   * Pass amount as NEAR value, it will be converted to yoctoNEAR automatically
+   */
+  withdraw: (amount: number) => Promise<any>;
+
+  /**
+   * Function to get account storage balance
+   */
+  balance: () => Promise<any>;
+
+  /**
+   * Function to unregister account from the contract
+   * and withdraw all deposited fee storage costs
+   */
+  unregister: (force: boolean) => Promise<any>;
+};
 
 export type AssetManagerType = {
   /**
@@ -48,6 +75,8 @@ export type AssetManagerType = {
    * @returns boolean
    */
   getPossibleTokens: () => Promise<any>;
+
+  storage: AssetManagerStorageType;
 };
 
 export class AssetManagerClient extends GenericSmartContractClient<AssetManagerContractMethods> {
@@ -73,7 +102,10 @@ export class AssetManagerClient extends GenericSmartContractClient<AssetManagerC
 
     if (!userExists) {
       this.logger.debug('User account not exists, creating');
-      await this.getContract().create_user_account({ args: {} });
+      await this.getContract().storage_deposit({
+        args: { account_id: this.SDKConfig.accountId, registration_only: true },
+        amount: utils.format.parseNearAmount('0.00125'),
+      });
       this.logger.debug('User account created');
     }
 
@@ -188,6 +220,19 @@ export class AssetManagerClient extends GenericSmartContractClient<AssetManagerC
         return this.getContract().get_listed_tokens({
           args: {},
         });
+      },
+      storage: {
+        deposit: amount =>
+          this.getContract().storage_deposit({
+            args: { account_id: this.SDKConfig.accountId, registration_only: false },
+            amount: utils.format.parseNearAmount(amount.toString()),
+          }),
+        withdraw: amount =>
+          this.getContract().storage_withdraw({
+            args: { amount },
+          }),
+        balance: () => this.getContract().storage_balance_of({ args: { account_id: this.SDKConfig.accountId } }),
+        unregister: (force = false) => this.getContract().storage_unregister({ args: { force } }),
       },
     };
   }
