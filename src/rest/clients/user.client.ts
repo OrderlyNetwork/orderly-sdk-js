@@ -16,7 +16,7 @@ export type AccountType = {
    *
    * @link https://docs-api.orderly.network/#get-current-holding
    */
-  getCurrentHolding: (all: boolean) => Promise<HoldingInformation[]>;
+  getCurrentHolding: (all?: boolean) => Promise<HoldingInformation[]>;
 
   /**
    * Get account information

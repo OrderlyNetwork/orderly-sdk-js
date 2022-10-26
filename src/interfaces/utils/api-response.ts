@@ -1,8 +1,8 @@
 import { RestApiErrorCode } from '../../enums';
 
-export type ApiResponse<T> = SucceSuccessfullApiResponse<T> | FailedApiResponse;
+export type ApiResponse<T> = SuccessfullApiResponse<T> | FailedApiResponse;
 
-export interface SucceSuccessfullApiResponse<T> {
+export interface SuccessfullApiResponse<T> {
   success: true;
   data: T;
   timestamp?: number;

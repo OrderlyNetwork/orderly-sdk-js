@@ -8,6 +8,7 @@ import {
   UserKeyRequest,
   WithdrawRequest,
 } from '../../../interfaces/requests';
+import { StorageContractResponse } from '../../../interfaces/responses';
 import { CallMethodSignature } from '../../../interfaces/utils';
 
 export const AssetManagerContractMethodsList = {
@@ -38,7 +39,7 @@ export const AssetManagerContractMethodsList = {
 
 export interface AssetManagerContractMethods {
   // Authentication/registration
-  storage_deposit: (params: StorageDepositRequest) => Promise<void>;
+  storage_deposit: (params: StorageDepositRequest) => Promise<StorageContractResponse>;
   user_announce_key: (params: EmptyRequest) => Promise<void>;
   user_request_set_trading_key: (params: CallMethodSignature<{ key: string }>) => Promise<void>;
   // Deposit
@@ -46,13 +47,13 @@ export interface AssetManagerContractMethods {
   ft_transfer_call: (params: DepositFungibleTokenRequest) => Promise<any>;
   // Withdrawal
   user_request_withdraw: (params: WithdrawRequest) => Promise<any>;
-  storage_withdraw: (params: StorageWithdrawRequest) => Promise<any>;
-  storage_unregister: (params: StorageUnregisterRequest) => Promise<any>;
+  storage_withdraw: (params: StorageWithdrawRequest) => Promise<StorageContractResponse>;
+  storage_unregister: (params: StorageUnregisterRequest) => Promise<boolean>;
   // Data access
   is_token_listed: (params: CallMethodSignature<{ token: string }>) => Promise<boolean>;
   get_listed_tokens: (params: EmptyRequest) => Promise<any>;
   user_account_exists: (params: CallMethodSignature<{ user: string }>) => Promise<boolean>;
-  storage_balance_of: (params: CallMethodSignature<{ account_id: string }>) => Promise<number>;
+  storage_balance_of: (params: CallMethodSignature<{ account_id: string }>) => Promise<StorageContractResponse>;
   is_symbol_listed: (params: CallMethodSignature<{ pair_symbol: string }>) => Promise<boolean>;
   get_user_trading_key: (params: UserKeyRequest) => Promise<string>;
   is_orderly_key_announced: (params: UserKeyRequest) => Promise<boolean>;

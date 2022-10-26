@@ -37,7 +37,7 @@ export type PublicType = {
    *
    * @link https://docs-api.orderly.network/#market-trades-public
    */
-  getMarketTrades: (symbol: string, limit: number) => Promise<TradeInformation[] | undefined>;
+  getMarketTrades: (symbol: string, limit?: number) => Promise<TradeInformation[] | undefined>;
 };
 
 export class PublicClient extends GenericClient {
