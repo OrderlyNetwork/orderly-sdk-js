@@ -4,7 +4,8 @@ import keccak256 from 'keccak256';
 import { ConnectConfig, utils } from 'near-api-js';
 
 import { SDKConfigurationOptions } from '../../../interfaces/configuration';
-import { DepositParams, WithdrawParams } from '../../../interfaces/requests';
+import { DepositParams, StorageWithdrawParams, WithdrawParams } from '../../../interfaces/requests';
+import { StorageContractResponse, StorageResponse } from '../../../interfaces/responses';
 import { GenericSmartContractClient } from '../../../interfaces/utils';
 import { AssetManagerContractMethods, AssetManagerContractMethodsList } from './asset-manager.methods';
 
@@ -14,25 +15,32 @@ type AssetManagerStorageType = {
    *
    * Pass amount as NEAR value, it will be converted to yoctoNEAR automatically
    */
-  deposit: (amount: number) => Promise<any>;
+  deposit: (amount: number) => Promise<StorageResponse>;
 
   /**
    * Function to withdraw NEAR from the account storage
    *
    * Pass amount as NEAR value, it will be converted to yoctoNEAR automatically
+   * If amount is omitted, contract will refund full `available` balance.
+   * If `amount` exceeds available balance, it will throw an error.
    */
-  withdraw: (amount: number) => Promise<any>;
+  withdraw: (amount: number) => Promise<StorageResponse>;
 
   /**
    * Function to get account storage balance
    */
-  balance: () => Promise<any>;
+  balance: () => Promise<StorageResponse>;
 
   /**
    * Function to unregister account from the contract
    * and withdraw all deposited fee storage costs
+   *
+   * Returns `true` if the account was unregistered.
+   * Returns `false` if account was not registered before.
+   *
+   * **This method will be released in next version**
    */
-  unregister: (force: boolean) => Promise<any>;
+  unregister: (force?: boolean) => Promise<boolean>;
 };
 
 export type AssetManagerType = {
@@ -104,7 +112,7 @@ export class AssetManagerClient extends GenericSmartContractClient<AssetManagerC
       this.logger.debug('User account not exists, creating');
       await this.getContract().storage_deposit({
         args: { account_id: this.SDKConfig.accountId, registration_only: true },
-        amount: utils.format.parseNearAmount('0.00125'),
+        amount: utils.format.parseNearAmount('0.005'),
       });
       this.logger.debug('User account created');
     }
@@ -163,11 +171,13 @@ export class AssetManagerClient extends GenericSmartContractClient<AssetManagerC
 
     this.logger.debug('Trading key is generated, setting it');
 
-    await this.getContract().user_request_set_trading_key({
+    const tradingKeyResult = await this.getContract().user_request_set_trading_key({
       args: {
         key: normalizeTradingKey,
       },
     });
+
+    this.logger.debug(tradingKeyResult);
 
     this.logger.debug('Trading key successfuly set');
 
@@ -198,6 +208,15 @@ export class AssetManagerClient extends GenericSmartContractClient<AssetManagerC
     return tradingKey;
   }
 
+  private toStorageResponse(contractResponse: StorageContractResponse): StorageResponse {
+    const { total, available } = contractResponse;
+
+    return {
+      total: parseFloat(utils.format.formatNearAmount(total, 2)),
+      available: parseFloat(utils.format.formatNearAmount(available, 2)),
+    };
+  }
+
   get assetManager(): AssetManagerType {
     return {
       deposit: args => {
@@ -205,7 +224,7 @@ export class AssetManagerClient extends GenericSmartContractClient<AssetManagerC
           ? this.getContract().ft_transfer_call({
               args,
             })
-          : this.getContract().user_deposit_native_token({ args: { amount: args.amount } });
+          : this.getContract().user_deposit_native_token({ args });
       },
       withdraw: args => {
         return this.getContract().user_request_withdraw({ args });
@@ -222,17 +241,36 @@ export class AssetManagerClient extends GenericSmartContractClient<AssetManagerC
         });
       },
       storage: {
-        deposit: amount =>
-          this.getContract().storage_deposit({
+        deposit: async amount => {
+          const response = await this.getContract().storage_deposit({
             args: { account_id: this.SDKConfig.accountId, registration_only: false },
             amount: utils.format.parseNearAmount(amount.toString()),
-          }),
-        withdraw: amount =>
-          this.getContract().storage_withdraw({
-            args: { amount },
-          }),
-        balance: () => this.getContract().storage_balance_of({ args: { account_id: this.SDKConfig.accountId } }),
-        unregister: (force = false) => this.getContract().storage_unregister({ args: { force } }),
+          });
+
+          return this.toStorageResponse(response);
+        },
+        withdraw: async amount => {
+          const args: StorageWithdrawParams = {};
+
+          if (amount) {
+            args.amount = utils.format.parseNearAmount(amount.toString());
+          }
+
+          const response = await this.getContract().storage_withdraw({
+            args,
+            amount: '1',
+          });
+
+          return this.toStorageResponse(response);
+        },
+        balance: async () => {
+          const response = await this.getContract().storage_balance_of({
+            args: { account_id: this.SDKConfig.accountId },
+          });
+
+          return this.toStorageResponse(response);
+        },
+        unregister: (_force = false) => this.getContract().storage_unregister({ args: {}, amount: '1' }),
       },
     };
   }
