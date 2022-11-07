@@ -4,7 +4,15 @@ import { AssetManagerClient, AssetManagerType } from './clients/asset-manager/as
 import { FungibleTokenClient, FungibleTokenType } from './clients/faucet/fungible-token.client';
 
 export type SmartContractType = {
+  /**
+   * Get asset manager contract instance
+   */
   assetManager: () => Promise<AssetManagerType>;
+  /**
+   * Get or create new fungible token contract connection
+   *
+   * @param contractUrl URL where the fungible contract is deployed
+   */
   fungibleToken: (contractUrl: string) => Promise<FungibleTokenType>;
 };
 
