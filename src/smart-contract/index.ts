@@ -1,55 +1,61 @@
 import { SDKConfigurationOptions } from '../interfaces/configuration';
 import { GenericClient } from '../interfaces/utils';
 import { AssetManagerClient, AssetManagerType } from './clients/asset-manager/asset-manager.client';
-import { FaucetClient, FaucetType } from './clients/faucet/faucet.client';
+import { FungibleTokenClient, FungibleTokenType } from './clients/faucet/fungible-token.client';
 
 export type SmartContractType = {
-  assetManager: AssetManagerType;
-  faucet: FaucetType;
+  assetManager: () => Promise<AssetManagerType>;
+  fungibleToken: (contractUrl: string) => Promise<FungibleTokenType>;
 };
 
 export class SmartContractClient extends GenericClient {
   private assetManagerClient: AssetManagerClient;
-  private faucetClient: FaucetClient;
+  private fungibleTokenClients: Record<string, FungibleTokenClient> = {};
 
   constructor(private config: SDKConfigurationOptions) {
     super('Smart Contract Client', config.debug);
   }
 
-  async connect(): Promise<string> {
-    this.assetManagerClient = new AssetManagerClient(this.config, {
-      nodeUrl: `https://rpc.${this.config.networkId}.near.org`,
-      walletUrl: `https://wallet.${this.config.networkId}.near.org`,
-      helperUrl: `https://helper.${this.config.networkId}.near.org`,
-      headers: {},
-    });
-
-    this.logger.debug('Initialized Asset Manager Client');
-
-    this.faucetClient = new FaucetClient(this.config, {
-      nodeUrl: `https://rpc.${this.config.networkId}.near.org`,
-      walletUrl: `https://wallet.${this.config.networkId}.near.org`,
-      helperUrl: `https://helper.${this.config.networkId}.near.org`,
-      headers: {},
-    });
-
-    this.logger.debug('Initialized Faucet Client');
-
-    const tradingKey = await this.assetManagerClient.connect();
-
-    await this.faucetClient.connect();
-
-    return tradingKey;
-  }
-
   get smartContract(): SmartContractType {
-    if (!this.assetManagerClient || !this.faucetClient) {
-      throw new Error('Call connect method, before accessing the API');
-    }
-
     return {
-      assetManager: this.assetManagerClient.assetManager,
-      faucet: this.faucetClient.faucet,
+      assetManager: async () => {
+        if (!this.assetManagerClient) {
+          this.assetManagerClient = new AssetManagerClient(this.config, {
+            nodeUrl: `https://rpc.${this.config.networkId}.near.org`,
+            walletUrl: `https://wallet.${this.config.networkId}.near.org`,
+            helperUrl: `https://helper.${this.config.networkId}.near.org`,
+            headers: {},
+          });
+
+          this.logger.debug('Initialized Asset Manager Client');
+
+          await this.assetManagerClient.connect();
+        }
+
+        return this.assetManagerClient.assetManager;
+      },
+      fungibleToken: async contractUrl => {
+        let client = this.fungibleTokenClients[contractUrl];
+
+        if (!client) {
+          client = new FungibleTokenClient(
+            this.config,
+            {
+              nodeUrl: `https://rpc.${this.config.networkId}.near.org`,
+              walletUrl: `https://wallet.${this.config.networkId}.near.org`,
+              helperUrl: `https://helper.${this.config.networkId}.near.org`,
+              headers: {},
+            },
+            contractUrl,
+          );
+
+          await client.connect();
+
+          this.fungibleTokenClients[contractUrl] = client;
+        }
+
+        return client.fungibleToken;
+      },
     };
   }
 }
