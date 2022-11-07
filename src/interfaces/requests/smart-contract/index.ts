@@ -1,5 +1,6 @@
 export * from './deposit.request';
 export * from './empty.request';
+export * from './fungible-token-deposit.request';
 export * from './get-tokens.request';
 export * from './storage-deposit.request';
 export * from './storage-unregister.request';

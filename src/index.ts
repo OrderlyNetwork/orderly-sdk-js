@@ -60,17 +60,15 @@ class OrderlyClient {
     };
   }
 
-  async connect(): Promise<void> {
-    const tradingKey = await this.smartContractClient.connect();
-
-    this.restClient = new RestClient(this.config, tradingKey);
-  }
-
   get smartContract(): SmartContractType {
     return this.smartContractClient.smartContract;
   }
 
   get rest(): RestType {
+    if (!this.restClient) {
+      this.restClient = new RestClient(this.config);
+    }
+
     return this.restClient.rest;
   }
 }

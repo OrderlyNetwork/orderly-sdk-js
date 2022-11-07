@@ -1,6 +1,5 @@
 import {
-  DepositFungibleTokenRequest,
-  DepositNearRequest,
+  DepositRequest,
   EmptyRequest,
   StorageDepositRequest,
   StorageUnregisterRequest,
@@ -20,7 +19,6 @@ export const AssetManagerContractMethodsList = {
     'user_request_set_trading_key',
     // Deposit
     'user_deposit_native_token',
-    'ft_transfer_call',
     // Withdrawal
     'user_request_withdraw',
     'storage_withdraw',
@@ -43,8 +41,7 @@ export interface AssetManagerContractMethods {
   user_announce_key: (params: EmptyRequest) => Promise<void>;
   user_request_set_trading_key: (params: CallMethodSignature<{ key: string }>) => Promise<void>;
   // Deposit
-  user_deposit_native_token: (params: DepositNearRequest) => Promise<any>;
-  ft_transfer_call: (params: DepositFungibleTokenRequest) => Promise<any>;
+  user_deposit_native_token: (params: DepositRequest) => Promise<any>;
   // Withdrawal
   user_request_withdraw: (params: WithdrawRequest) => Promise<any>;
   storage_withdraw: (params: StorageWithdrawRequest) => Promise<StorageContractResponse>;

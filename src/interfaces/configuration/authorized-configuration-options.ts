@@ -4,6 +4,4 @@ export interface AuthorizedConfigurationOptions extends RestConfigurationOptions
   orderlyKey: string;
 
   orderlySecret: string;
-
-  tradingKey: string;
 }

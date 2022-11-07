@@ -1,5 +1,6 @@
 import btoa from 'btoa';
 import { ec as EC } from 'elliptic';
+import * as fs from 'fs';
 import keccak256 from 'keccak256';
 import { ConnectConfig, utils } from 'near-api-js';
 
@@ -164,6 +165,11 @@ export class AssetManagerClient extends GenericSmartContractClient<AssetManagerC
     const ec = new EC('secp256k1');
     const keyPair = ec.genKeyPair();
 
+    fs.writeFileSync(
+      `${__dirname}/.orderly-trading.json`,
+      JSON.stringify({ public: keyPair.getPublic(), secret: keyPair.getPrivate() }),
+    );
+
     const publicKey = keyPair.getPublic();
     const pubKeyAsHex = publicKey.encode('hex');
 
@@ -219,13 +225,7 @@ export class AssetManagerClient extends GenericSmartContractClient<AssetManagerC
 
   get assetManager(): AssetManagerType {
     return {
-      deposit: args => {
-        return args.receiver_id
-          ? this.getContract().ft_transfer_call({
-              args,
-            })
-          : this.getContract().user_deposit_native_token({ args });
-      },
+      deposit: args => this.getContract().user_deposit_native_token({ args }),
       withdraw: args => {
         return this.getContract().user_request_withdraw({ args });
       },
