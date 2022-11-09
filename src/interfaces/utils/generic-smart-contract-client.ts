@@ -1,8 +1,9 @@
-import { Account, connect, ConnectConfig, KeyPair, keyStores, Near } from 'near-api-js';
+import { Account, connect, KeyPair, keyStores, Near } from 'near-api-js';
 import { Contract, ContractMethods } from 'near-api-js/lib/contract';
 
 import { NearNetworkId } from '../../enums/near-network-id.enum';
 import { SDKConfigurationOptions } from '../../interfaces/configuration';
+import { NearConfigurationOptions } from '../configuration/near-configuration-options';
 import { GenericClient } from './generic-client';
 
 export abstract class GenericSmartContractClient<T> extends GenericClient {
@@ -14,10 +15,13 @@ export abstract class GenericSmartContractClient<T> extends GenericClient {
 
   constructor(
     clientName: string,
-    private sdkConfig: SDKConfigurationOptions,
-    private config: Omit<ConnectConfig, 'keyStore' | 'networkId'>,
-    private contractName: string,
-    private contractOptions: ContractMethods,
+    protected contractName: string,
+    protected contractMethods: ContractMethods,
+    protected sdkConfig: SDKConfigurationOptions,
+    protected nearConfig: NearConfigurationOptions = {
+      nodeUrl: `https://rpc.${sdkConfig.networkId}.near.org`,
+      headers: {},
+    },
   ) {
     super(clientName, sdkConfig.debug);
 
@@ -30,12 +34,12 @@ export abstract class GenericSmartContractClient<T> extends GenericClient {
     this.near = await connect({
       keyStore: this.keyStore,
       networkId: this.networkId,
-      ...this.config,
+      ...this.nearConfig,
     });
 
     this.account = new Account(this.near.connection, this.sdkConfig.accountId);
 
-    this.contract = new Contract(this.account, this.contractName, this.contractOptions);
+    this.contract = new Contract(this.account, this.contractName, this.contractMethods);
   }
 
   private async createKeyStore() {

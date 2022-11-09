@@ -5,13 +5,6 @@ import { PublicClient, PublicType } from './clients/public.client';
 import { TradeClient, TradeType } from './clients/trade.client';
 import { AccountClient, AccountType } from './clients/user.client';
 
-export type RestType = {
-  public: PublicType;
-  orders: OrdersType;
-  trade: TradeType;
-  account: AccountType;
-};
-
 export class RestClient {
   private publicClient: PublicClient;
   private ordersClient: OrdersClient;
@@ -51,12 +44,19 @@ export class RestClient {
     );
   }
 
-  get rest(): RestType {
-    return {
-      public: this.publicClient.public,
-      orders: this.ordersClient.orders,
-      trade: this.tradeClient.trade,
-      account: this.accountClient.account,
-    };
+  get public(): PublicType {
+    return this.publicClient.public;
+  }
+
+  get orders(): OrdersType {
+    return this.ordersClient.orders;
+  }
+
+  get trade(): TradeType {
+    return this.tradeClient.trade;
+  }
+
+  get account(): AccountType {
+    return this.accountClient.account;
   }
 }

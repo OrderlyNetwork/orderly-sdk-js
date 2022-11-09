@@ -2,9 +2,10 @@ import btoa from 'btoa';
 import { ec as EC } from 'elliptic';
 import * as fs from 'fs';
 import keccak256 from 'keccak256';
-import { ConnectConfig, utils } from 'near-api-js';
+import { utils } from 'near-api-js';
 
 import { SDKConfigurationOptions } from '../../../interfaces/configuration';
+import { NearConfigurationOptions } from '../../../interfaces/configuration/near-configuration-options';
 import { DepositParams, StorageWithdrawParams, WithdrawParams } from '../../../interfaces/requests';
 import { StorageContractResponse, StorageResponse } from '../../../interfaces/responses';
 import { GenericSmartContractClient } from '../../../interfaces/utils';
@@ -44,58 +45,14 @@ type AssetManagerStorageType = {
   unregister: (force?: boolean) => Promise<boolean>;
 };
 
-export type AssetManagerType = {
-  /**
-   * Function to deposit tokens to your account
-   *
-   * In order to deposit not native token, pass receiver_id in args for this function
-   *
-   * @returns void
-   */
-  deposit: (args: DepositParams) => Promise<any>;
-
-  /**
-   * Function to withdraw tokens from your account
-   *
-   * @returns string
-   */
-  withdraw: (args: WithdrawParams) => Promise<any>;
-
-  /**
-   * Function to check if provided token is allowed for your account
-   * on this contract
-   *
-   * @returns boolean
-   */
-  isTokenListed: (token: string) => Promise<boolean>;
-
-  /**
-   * Function to check if provided pair is allowed for your account
-   * on this contract
-   *
-   * @returns boolean
-   */
-  isSymbolPairListed: (pair: string) => Promise<boolean>;
-
-  /**
-   * Function to get all allowed tokens for your account
-   * on this contract
-   *
-   * @returns boolean
-   */
-  getPossibleTokens: () => Promise<any>;
-
-  storage: AssetManagerStorageType;
-};
-
 export class AssetManagerClient extends GenericSmartContractClient<AssetManagerContractMethods> {
-  constructor(private SDKConfig: SDKConfigurationOptions, config: Omit<ConnectConfig, 'keyStore' | 'networkId'>) {
+  constructor(sdkConfiguration: SDKConfigurationOptions, nearConfiguration?: NearConfigurationOptions) {
     super(
       'AssetManagerClient',
-      SDKConfig,
-      config,
-      `asset-manager.orderly.${SDKConfig.networkId}`,
+      `asset-manager.orderly.${sdkConfiguration.networkId}`,
       AssetManagerContractMethodsList,
+      sdkConfiguration,
+      nearConfiguration,
     );
   }
 
@@ -106,13 +63,13 @@ export class AssetManagerClient extends GenericSmartContractClient<AssetManagerC
     this.logger.debug('Checking if user account exists');
 
     const userExists = await this.getContract().user_account_exists({
-      args: { user: this.SDKConfig.accountId },
+      args: { user: this.sdkConfig.accountId },
     });
 
     if (!userExists) {
       this.logger.debug('User account not exists, creating');
       await this.getContract().storage_deposit({
-        args: { account_id: this.SDKConfig.accountId, registration_only: true },
+        args: { account_id: this.sdkConfig.accountId, registration_only: true },
         amount: utils.format.parseNearAmount('0.005'),
       });
       this.logger.debug('User account created');
@@ -130,7 +87,7 @@ export class AssetManagerClient extends GenericSmartContractClient<AssetManagerC
     const isKeyAnnounced = await this.getContract().is_orderly_key_announced({
       args: {
         user: this.getContract().account.accountId,
-        orderly_key: this.SDKConfig.publicKey,
+        orderly_key: this.sdkConfig.publicKey,
       },
     });
 
@@ -149,14 +106,14 @@ export class AssetManagerClient extends GenericSmartContractClient<AssetManagerC
     this.logger.debug('Checking if trading key is already set');
 
     const tradingKeyIsSet = await this.getContract().is_trading_key_set({
-      args: { user: this.SDKConfig.accountId, orderly_key: this.SDKConfig.publicKey },
+      args: { user: this.sdkConfig.accountId, orderly_key: this.sdkConfig.publicKey },
     });
 
     if (tradingKeyIsSet) {
       this.logger.debug('Trading key is already set, requesting it');
 
       return this.getContract().get_user_trading_key({
-        args: { user: this.SDKConfig.accountId, orderly_key: this.SDKConfig.publicKey },
+        args: { user: this.sdkConfig.accountId, orderly_key: this.sdkConfig.publicKey },
       });
     }
 
@@ -192,7 +149,7 @@ export class AssetManagerClient extends GenericSmartContractClient<AssetManagerC
 
   // Public methods
   /**
-   * Function to connect to the contract, authenticate and return `tradingKey`
+   * Function to connect to the contract, authenticate and create credentials file
    *
    * @returns string
    */
@@ -223,55 +180,87 @@ export class AssetManagerClient extends GenericSmartContractClient<AssetManagerC
     };
   }
 
-  get assetManager(): AssetManagerType {
+  /**
+   * Function to deposit NEAR to your account
+   *
+   */
+  deposit(args: DepositParams) {
+    return this.getContract().user_deposit_native_token({ args });
+  }
+
+  /**
+   * Function to withdraw tokens from your account
+   *
+   * @returns string
+   */
+  withdraw(args: WithdrawParams) {
+    return this.getContract().user_request_withdraw({ args });
+  }
+
+  /**
+   * Function to check if provided token is allowed for your account
+   * on this contract
+   *
+   * @returns boolean
+   */
+  isTokenListed(token: string) {
+    return this.getContract().is_token_listed({ args: { token } });
+  }
+
+  /**
+   * Function to check if provided pair is allowed for your account
+   * on this contract
+   *
+   * @returns boolean
+   */
+  isSymbolPairListed(pair: string) {
+    return this.getContract().is_symbol_listed({ args: { pair_symbol: pair } });
+  }
+
+  /**
+   * Function to get all allowed tokens for your account
+   * on this contract
+   *
+   * @returns boolean
+   */
+  getPossibleTokens() {
+    return this.getContract().get_listed_tokens({
+      args: {},
+    });
+  }
+
+  get storage(): AssetManagerStorageType {
     return {
-      deposit: args => this.getContract().user_deposit_native_token({ args }),
-      withdraw: args => {
-        return this.getContract().user_request_withdraw({ args });
-      },
-      isTokenListed: token => {
-        return this.getContract().is_token_listed({ args: { token } });
-      },
-      isSymbolPairListed: pair => {
-        return this.getContract().is_symbol_listed({ args: { pair_symbol: pair } });
-      },
-      getPossibleTokens: () => {
-        return this.getContract().get_listed_tokens({
-          args: {},
+      deposit: async amount => {
+        const response = await this.getContract().storage_deposit({
+          args: { account_id: this.sdkConfig.accountId, registration_only: false },
+          amount: utils.format.parseNearAmount(amount.toString()),
         });
+
+        return this.toStorageResponse(response);
       },
-      storage: {
-        deposit: async amount => {
-          const response = await this.getContract().storage_deposit({
-            args: { account_id: this.SDKConfig.accountId, registration_only: false },
-            amount: utils.format.parseNearAmount(amount.toString()),
-          });
+      withdraw: async amount => {
+        const args: StorageWithdrawParams = {};
 
-          return this.toStorageResponse(response);
-        },
-        withdraw: async amount => {
-          const args: StorageWithdrawParams = {};
+        if (amount) {
+          args.amount = utils.format.parseNearAmount(amount.toString());
+        }
 
-          if (amount) {
-            args.amount = utils.format.parseNearAmount(amount.toString());
-          }
+        const response = await this.getContract().storage_withdraw({
+          args,
+          amount: '1',
+        });
 
-          const response = await this.getContract().storage_withdraw({
-            args,
-            amount: '1',
-          });
-
-          return this.toStorageResponse(response);
-        },
-        balance: async () => {
-          const response = await this.getContract().storage_balance_of({
-            args: { account_id: this.SDKConfig.accountId },
-          });
-
-          return this.toStorageResponse(response);
-        },
-        unregister: (_force = false) => this.getContract().storage_unregister({ args: {}, amount: '1' }),
+        return this.toStorageResponse(response);
       },
+      balance: async () => {
+        const response = await this.getContract().storage_balance_of({
+          args: { account_id: this.sdkConfig.accountId },
+        });
+
+        return this.toStorageResponse(response);
+      },
+      unregister: (_force = false) => this.getContract().storage_unregister({ args: {}, amount: '1' }),
     };
   }
 }

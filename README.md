@@ -6,53 +6,49 @@ Library is written fully in Typescript, so no additional types installation is n
 
 ## Usage
 
+### Available clients
+1. `AssetManagerClient` - asset manager smart contract client;
+2. `FungibleTokenClient` - fungible token smart contract client;
+3. `RESTClient` - REST API client.
+
 ### Initialization
-Orderly SDK client needs 4 variables to be initalized:
-1. Network id - NEAR network id to which we want to connect when we are working with the SDK. Currently Orderly contracts are deployed to `testnet` and `mainnet` (faucet contract is deployed only to `testnet`).
-2. Account ID - account id, with which the SKD will be working
-3. Public key - NEAR public key, retrieved via NEAR CLI `login` command
-4. Secret key - NEAR private key, retrieved via NEAR CLI `login` command
+To initialize these clients you will need:
+1. For asset manager contract client - SDK configration options;
+2. For fungible token contract client - contract URL and SDK configration options;
+3. For REST client - SDK configration options;
+
+SDK configuration options is an object with the next properties:
+1. `networkId` - NEAR network id to which we want to connect when we are working with the SDK. Currently Orderly contracts are deployed to `testnet` and `mainnet` (fungible token contract is deployed only to `testnet`).
+2. `accountId` - account id, with which the SDK will be working
+3. `publicKey` - NEAR public key, retrieved via NEAR CLI `login` command
+4. `secretKey` - NEAR private key, retrieved via NEAR CLI `login` command
 
 > **_Note:_**
 > You can read about NEAR CLI [here](https://docs.near.org/tools/near-cli)
 
-These parameters can be passed:
-1. Via constructor (_optional_)
-```ts
-const orderly = new Orderly({
-  networkId: 'testnet' | 'mainnet',
-  accountId: '<Your account id>',
-  publicKey: '<Your public key>',
-  secretKey: '<Your private key>',
-})
-```
-2. Via environment variables
-```env
-NETWORK_ID='testnet' | 'mainnet'
-ORDERLY_ACCOUNT_ID=<Your account id>
-ORDERLY_KEY=<Your public key>
-ORDERLY_SECRET=<Your private key>
-```
-Constructor parameters are optional, so you can create new instance of SDK client just like this - `new Orderly()`. In this case library will look for environment variables. If both ways are provided, the constructor parameters are preffered.
+Also, for smart contract clients, if you want to change the NEAR configuration options, pass them as the last parameter in their constructors.
+
+For the REST client the second parameter is API version, with v1 as a default.
+
 ### First steps
-After instantiating the client, call the `connect` function.
+After instantiating the smart contract client, call the `connect` function.
 
 ```ts
-const orderly = new Orderly();
+const assetManagerClient = new AssetManagerClient({
+  networkId: 'testnet',
+  accountId: 'test.testnet.near',
+  publicKey: 'public_key',
+  secretKey: 'secret_key',
+});
 
-await orderly.connect();
+await assetManagerClient.connect();
 
-// After that you will be able to work with the library
+// After that you will be able to work with the asset manager contract
 ```
-### Avaiable clients
-Orderly SDK client incapsulates three clients:
-1. Asset manager contract client - `<Orderly Client Instance>.smartContract.assetManager`
-2. Faucet contract client - `<Orderly Client Instance>.smartContract.faucet`
-3. REST client - `<Orderly Client Instance>.rest`
 ### Asset manager contract
 _Documentation can be found [here](https://docs.orderly.network/build-on-orderly/host-a-gui/smart-contract-api)._
 #### Storage
-_Path: `<Orderly Client Instance>.smartContract.assetManager.storage.<method (described above)>`_
+_Path: `<Asset Manager Contract Client Instance>.storage.<method (described above)>`_
 
 Orderly asset manager contract implements NEP-145 protocol, so has next methods according to it:
 * `deposit` - method to deposit NEAR into storage from account.
@@ -74,12 +70,11 @@ Orderly asset manager contract implements NEP-145 protocol, so has next methods 
   | --- | :---: | :---: | --- |
   | `force` | `boolean` | No | If `true` will ignore account balances (burn them) and close the account; if `false` (or omitted) and caller has a positive registered balance it will throw an error |
 #### Other methods
-_Path: `<Orderly Client Instance>.smartContract.assetManager.<method (described above)>`_
-* `deposit` - this method is used to deposit tokens to your account. 
+_Path: `<Asset Manager Contract Client Instance>.<method (described above)>`_
+* `deposit` - this method is used to deposit NEAR to your account. 
   | Parameter name | Type | Is required? | Description |
   | --- | :---: | :---: | --- |
-  | `amount` | `number` | Yes | How much tokens to deposit |
-  | `receiver_id` | `string` | No | Is needed if you want to deposit fugitive tokens, otherwise it will deposit NEAR |
+  | `amount` | `number` | Yes | How much NEAR to deposit |
   | `msg` | `string` | No | Optional message for transaction |
 * `withdraw` - this method is used to withdraw tokens from your account in contract.
   | Parameter name | Type | Is required? | Description |
@@ -95,22 +90,30 @@ _Path: `<Orderly Client Instance>.smartContract.assetManager.<method (described 
   | --- | :---: | :---: | --- |
   | `pair` | `string` | Yes | Symbol pair to check |
 * `getPossibleTokens` - this method is used to get all whitelisted tokens for your account on the contract.
+  
+  **Parameters:** _None_
+### Fungible token contract
+* `getTokens` - this method is used to get all whitelisted tokens for your account on the contract.
 
   **Parameters:** _None_
-### Faucet contract
-_Path: `<Orderly Client Instance>.smartContract.faucet`_
-* `getTokens`
+* `deposit` - this method is used to deposit fungible token to your account. 
+  | Parameter name | Type | Is required? | Description |
+  | --- | :---: | :---: | --- |
+  | `amount` | `number` | Yes | How much tokens to deposit |
+  | `receiver_id` | `string` | Yes | User's Asset Manager account |
+  | `msg` | `string` | No | Optional message for transaction |
 
 ### REST client
 _Documentation can be found [here](https://docs-api.orderly.network/#restful-api)_
-
-_Path: `<Orderly Client Instance>.rest`_
 
 REST client consists of the next clients:
 - `public` - public methods client;
 - `orders` - orders methods client;
 - `trade` - trade methods client;
 - `user` - user methods client.
+
+#### Prerequisites
+Before creating new REST client you need to connect to asset manager contract on the same network, which will register your user on it and will create a credentials file which will be needed for some of the trading calls here.
 
 #### Public methods
 - `getSymbolOrderRules` - this endpoint provides all the values for the rules that an order need to fulfil in order for it to be placed successfully.
