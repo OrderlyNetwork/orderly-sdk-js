@@ -9,6 +9,7 @@ import {
   GetCurrentHoldingResponse,
 } from '../../interfaces/responses';
 import { FailedApiResponse, GenericClient } from '../../interfaces/utils';
+import { generateGetHeaders } from '../utils/generateHeaders';
 
 export type AccountType = {
   /**
@@ -36,7 +37,7 @@ export type AccountType = {
 export class AccountClient extends GenericClient {
   private instance: AxiosInstance;
 
-  constructor(private config: AuthorizedConfigurationOptions, debug = false) {
+  constructor(private config: AuthorizedConfigurationOptions, private accountId: string, debug = false) {
     super('Account REST Client', debug);
 
     this.instance = axios.create({
@@ -48,10 +49,21 @@ export class AccountClient extends GenericClient {
     return {
       getCurrentHolding: async all => {
         try {
+          const headers = await generateGetHeaders(
+            'GET',
+            '/v1/client/holding',
+            { all },
+            this.config.orderlyKeyPrivate,
+            this.accountId,
+            this.config.orderlyKey,
+            true,
+          );
+
           const { data: response } = await this.instance.get<GetCurrentHoldingResponse>('client/holding', {
             params: {
               all,
             },
+            headers,
           });
 
           return response.data.holding;
@@ -82,7 +94,16 @@ export class AccountClient extends GenericClient {
       },
       getInformation: async () => {
         try {
-          const { data: response } = await this.instance.get<GetAccountInformationResponse>('client/info');
+          const headers = await generateGetHeaders(
+            'GET',
+            '/v1/client/info',
+            null,
+            this.config.orderlyKeyPrivate,
+            this.accountId,
+            this.config.orderlyKey,
+          );
+
+          const { data: response } = await this.instance.get<GetAccountInformationResponse>('client/info', { headers });
 
           return response.data;
         } catch (error) {
@@ -112,8 +133,19 @@ export class AccountClient extends GenericClient {
       },
       getAssetHistory: async params => {
         try {
+          const headers = await generateGetHeaders(
+            'GET',
+            '/v1/asset/history',
+            params,
+            this.config.orderlyKeyPrivate,
+            this.accountId,
+            this.config.orderlyKey,
+            true,
+          );
+
           const { data: response } = await this.instance.get<GetAssetHistoryResponse>('asset/history', {
             params,
+            headers,
           });
 
           return response.data.rows;

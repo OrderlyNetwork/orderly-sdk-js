@@ -1,13 +1,12 @@
-import { Account, connect, KeyPair, keyStores, Near } from 'near-api-js';
+import { Account, KeyPair, keyStores, Near } from 'near-api-js';
 import { Contract, ContractMethods } from 'near-api-js/lib/contract';
 
 import { NearNetworkId } from '../../enums/near-network-id.enum';
 import { SDKConfigurationOptions } from '../../interfaces/configuration';
-import { NearConfigurationOptions } from '../configuration/near-configuration-options';
 import { GenericClient } from './generic-client';
 
 export abstract class GenericSmartContractClient<T> extends GenericClient {
-  private networkId: NearNetworkId;
+  public networkId: NearNetworkId;
   private near: Near;
   private keyStore: keyStores.InMemoryKeyStore;
   private account: Account;
@@ -18,10 +17,8 @@ export abstract class GenericSmartContractClient<T> extends GenericClient {
     protected contractName: string,
     protected contractMethods: ContractMethods,
     protected sdkConfig: SDKConfigurationOptions,
-    protected nearConfig: NearConfigurationOptions = {
-      nodeUrl: `https://rpc.${sdkConfig.networkId}.near.org`,
-      headers: {},
-    },
+    protected nearAccount: any,
+    protected managerContract: any,
   ) {
     super(clientName, sdkConfig.debug);
 
@@ -29,23 +26,19 @@ export abstract class GenericSmartContractClient<T> extends GenericClient {
   }
 
   protected async _connect() {
-    await this.createKeyStore();
+    // await this.createKeyStore();
 
-    this.near = await connect({
-      keyStore: this.keyStore,
-      networkId: this.networkId,
-      ...this.nearConfig,
-    });
+    this.account = this.nearAccount;
 
-    this.account = new Account(this.near.connection, this.sdkConfig.accountId);
-
-    this.contract = new Contract(this.account, this.contractName, this.contractMethods);
+    this.contract = this.managerContract;
   }
 
   private async createKeyStore() {
     const keyPair = KeyPair.fromString(this.sdkConfig.secretKey);
 
     this.keyStore = new keyStores.InMemoryKeyStore();
+
+    console.log('this.keyStore', this.keyStore);
 
     await this.keyStore.setKey(this.networkId, this.sdkConfig.accountId, keyPair);
   }

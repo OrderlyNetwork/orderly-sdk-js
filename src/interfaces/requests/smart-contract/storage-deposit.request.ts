@@ -7,12 +7,12 @@ export interface StorageDepositParams {
   /**
    * Account id
    */
-  account_id: string;
+  account_id?: string;
 
   /**
    * Flag to only register the user
    */
-  registration_only: boolean;
+  registration_only?: boolean;
 }
 
 export type StorageDepositRequest = CallMethodSignature<StorageDepositParams>;

@@ -15,6 +15,11 @@ export interface CallMethodSignature<T> {
   amount?: string;
 
   /**
+   * Attached deposit in yoctoNEAR
+   */
+  deposit?: string;
+
+  /**
    * callbackUrl after the transaction approved
    */
   callbackUrl?: string;

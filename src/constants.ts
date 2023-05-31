@@ -1,0 +1,6 @@
+export const THIRTY_TGAS = '30000000000000';
+export const HUNDRED_TGAS = '100000000000000';
+export const MAX_TGAS = '300000000000000';
+export const NO_DEPOSIT = '0';
+export const STORAGE_DEPOSIT = '100000000000000000000000';
+export const ONE_YOCTO = '1';

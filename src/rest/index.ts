@@ -14,32 +14,40 @@ export class RestClient {
   constructor(private sdkOptions: SDKConfigurationOptions, private apiVersion = RestApiVersion.v1) {
     const apiUrl = RestAPIUrl[sdkOptions.networkId];
 
+    const keys = {
+      orderlyKey: this.sdkOptions.publicKey,
+      orderlySecret: this.sdkOptions.secretKey,
+      tradingPublic: this.sdkOptions.tradingPublic,
+      tradingSecret: this.sdkOptions.tradingSecret,
+      orderlyKeyPrivate: this.sdkOptions.orderlyKeyPrivate,
+    };
+
     this.publicClient = new PublicClient({ apiUrl, apiVersion: this.apiVersion }, this.sdkOptions.debug);
     this.ordersClient = new OrdersClient(
       {
         apiUrl,
         apiVersion,
-        orderlyKey: this.sdkOptions.publicKey,
-        orderlySecret: this.sdkOptions.secretKey,
+        ...keys,
       },
+      this.sdkOptions.accountId,
       this.sdkOptions.debug,
     );
     this.tradeClient = new TradeClient(
       {
         apiUrl,
         apiVersion,
-        orderlyKey: this.sdkOptions.publicKey,
-        orderlySecret: this.sdkOptions.secretKey,
+        ...keys,
       },
+      this.sdkOptions.accountId,
       this.sdkOptions.debug,
     );
     this.accountClient = new AccountClient(
       {
         apiUrl,
         apiVersion,
-        orderlyKey: this.sdkOptions.publicKey,
-        orderlySecret: this.sdkOptions.secretKey,
+        ...keys,
       },
+      this.sdkOptions.accountId,
       this.sdkOptions.debug,
     );
   }

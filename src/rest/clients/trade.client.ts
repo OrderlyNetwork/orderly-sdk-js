@@ -2,7 +2,7 @@ import axios, { AxiosError, AxiosInstance } from 'axios';
 
 import { Kline, OrderTrade } from '../../entities';
 import { AuthorizedConfigurationOptions } from '../../interfaces/configuration';
-import { GetKlineRequest } from '../../interfaces/requests';
+import { GetKlineRequest, GetTradesRequest } from '../../interfaces/requests';
 import {
   GetKlineResponse,
   GetOrderTradesResponse,
@@ -10,6 +10,7 @@ import {
   GetTradesResponse,
 } from '../../interfaces/responses';
 import { FailedApiResponse, GenericClient } from '../../interfaces/utils';
+import { generateGetHeaders } from '../utils/generateHeaders';
 
 export type TradeType = {
   /**
@@ -31,7 +32,7 @@ export type TradeType = {
    *
    * @link https://docs-api.orderly.network/#get-trades
    */
-  getTrades: (params: GetTradesResponse) => Promise<OrderTrade[]>;
+  getTrades: (params: GetTradesRequest) => Promise<OrderTrade[]>;
 
   /**
    * Get specific transaction detail by trade id.
@@ -44,7 +45,7 @@ export type TradeType = {
 export class TradeClient extends GenericClient {
   private instance: AxiosInstance;
 
-  constructor(private config: AuthorizedConfigurationOptions, debug = false) {
+  constructor(private config: AuthorizedConfigurationOptions, private accountId: string, debug = false) {
     super('Trade REST Client', debug);
 
     this.instance = axios.create({
@@ -56,8 +57,19 @@ export class TradeClient extends GenericClient {
     return {
       getKline: async params => {
         try {
+          const headers = await generateGetHeaders(
+            'GET',
+            '/v1/kline',
+            params,
+            this.config.orderlyKeyPrivate,
+            this.accountId,
+            this.config.orderlyKey,
+            true,
+          );
+
           const { data: response } = await this.instance.get<GetKlineResponse>('kline', {
             params,
+            headers,
           });
 
           return response.data.rows;
@@ -88,7 +100,18 @@ export class TradeClient extends GenericClient {
       },
       getOrderTrades: async orderId => {
         try {
-          const { data: response } = await this.instance.get<GetOrderTradesResponse>(`order/${orderId}/trades`);
+          const headers = await generateGetHeaders(
+            'GET',
+            `/v1/order/${orderId}/trades`,
+            null,
+            this.config.orderlyKeyPrivate,
+            this.accountId,
+            this.config.orderlyKey,
+          );
+
+          const { data: response } = await this.instance.get<GetOrderTradesResponse>(`order/${orderId}/trades`, {
+            headers,
+          });
 
           return response.data.rows;
         } catch (error) {
@@ -118,8 +141,18 @@ export class TradeClient extends GenericClient {
       },
       getTrades: async params => {
         try {
+          const headers = await generateGetHeaders(
+            'GET',
+            '/v1/trades',
+            params,
+            this.config.orderlyKeyPrivate,
+            this.accountId,
+            this.config.orderlyKey,
+            true,
+          );
           const { data: response } = await this.instance.get<GetTradesResponse>('trades', {
             params,
+            headers,
           });
 
           return response.data.rows;
@@ -150,7 +183,15 @@ export class TradeClient extends GenericClient {
       },
       getTrade: async tradeId => {
         try {
-          const { data: response } = await this.instance.get<GetTradeResponse>(`trades/${tradeId}`);
+          const headers = await generateGetHeaders(
+            'GET',
+            `/v1/trade/${tradeId}`,
+            null,
+            this.config.orderlyKeyPrivate,
+            this.accountId,
+            this.config.orderlyKey,
+          );
+          const { data: response } = await this.instance.get<GetTradeResponse>(`trade/${tradeId}`, { headers });
 
           return response.data;
         } catch (error) {

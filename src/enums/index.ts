@@ -8,3 +8,5 @@ export * from './rest-api-url.enum';
 export * from './rest-api-version.enum';
 export * from './transaction-side.enum';
 export * from './transaction-status.enum';
+export * from './ws-private-api-url.enum';
+export * from './ws-public-api-url.enum';

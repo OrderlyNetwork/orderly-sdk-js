@@ -22,7 +22,22 @@ export interface SDKConfigurationOptions {
   /**
    * NEAR account secret key
    */
-  secretKey: string;
+  secretKey?: string;
+
+  /**
+   * Orderly private key
+   */
+  orderlyKeyPrivate: string;
+
+  /**
+   * Trading private key
+   */
+  tradingSecret: string;
+
+  /**
+   * Trading public key
+   */
+  tradingPublic: string;
 
   /**
    * Whether to debug the client or not

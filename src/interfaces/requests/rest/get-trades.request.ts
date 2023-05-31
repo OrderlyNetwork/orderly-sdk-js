@@ -11,6 +11,8 @@ export interface GetTradesRequest {
    */
   tag?: string;
 
+  broker_id?: string;
+
   /**
    * Start time range that wish to query, noted the time stamp is 13-digits timestamp.
    */
