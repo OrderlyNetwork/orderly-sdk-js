@@ -22,6 +22,8 @@ export interface GetOrdersRequest {
    */
   start_t?: number;
 
+  broker_id?: string;
+
   /**
    * End time range that wish to query, noted the time stamp is 13-digits timestamp.
    */

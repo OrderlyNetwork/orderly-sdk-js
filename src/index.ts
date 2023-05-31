@@ -1,3 +1,4 @@
+export { AuthClient } from './auth/auth.client';
 export * as entities from './entities';
 export * as configuration from './interfaces/configuration';
 export { RestClient } from './rest';

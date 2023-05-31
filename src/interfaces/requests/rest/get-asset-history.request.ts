@@ -10,6 +10,8 @@ export interface GetAssetHistoryRequest {
 
   status?: keyof typeof TransactionStatus;
 
+  broker_id?: string;
+
   /**
    * Start time range that wish to query, noted the time stamp is 13-digits timestamp.
    */

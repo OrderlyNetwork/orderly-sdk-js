@@ -22,6 +22,7 @@ import {
   OrderbookData,
 } from '../../interfaces/responses';
 import { FailedApiResponse, GenericClient, ValidationResponse } from '../../interfaces/utils';
+import { generateGetHeaders, generatePostHeadersAndRequestData } from '../utils/generateHeaders';
 
 export type OrdersType = {
   /**
@@ -81,11 +82,11 @@ export type OrdersType = {
 export class OrdersClient extends GenericClient {
   private instance: AxiosInstance;
 
-  constructor(private config: AuthorizedConfigurationOptions, debug = false) {
+  constructor(private config: AuthorizedConfigurationOptions, private accountId: string, debug = false) {
     super('Orders REST Client', debug);
 
     this.instance = axios.create({
-      baseURL: `${this.config.apiUrl}/${this.config.apiVersion}`,
+      baseURL: `${this.config.apiUrl}/${this.config.apiVersion}`
     });
   }
 
@@ -93,15 +94,28 @@ export class OrdersClient extends GenericClient {
     return {
       create: async params => {
         try {
-          const validateResponse = validateCreateOrderRequest(params);
+          // const validateResponse = validateCreateOrderRequest(params);
 
-          if (!validateResponse.success) {
-            throw new Error(JSON.stringify(validateResponse.errors));
-          }
+          // if (!validateResponse.success) {
+          //   throw new Error(JSON.stringify(validateResponse.errors));
+          // }
 
-          const { data: response } = await this.instance.post<CreateOrderResponse>('order', {
-            ...params,
-            signature: '',
+          // console.log('createOrders', this.accountId);
+          // console.log(params, params);
+
+          const { headers, requestData } = await generatePostHeadersAndRequestData(
+            'POST',
+            '/v1/order',
+            params,
+            this.config.orderlyKeyPrivate,
+            this.accountId,
+            this.config.orderlyKey,
+            this.config.tradingSecret,
+            this.config.tradingPublic,
+          );
+
+          const { data: response } = await this.instance.post<CreateOrderResponse>('/order', requestData, {
+            headers: headers,
           });
 
           return response.data;
@@ -132,25 +146,24 @@ export class OrdersClient extends GenericClient {
       },
       createBatch: async params => {
         try {
-          const validationResults: { [key: number]: ValidationResponse } = params.orders.reduce(
-            (acc, curr, currIdx) => {
-              acc[currIdx] = validateCreateOrderRequest(curr);
-              return acc;
-            },
-            {},
+
+          const { headers, requestData } = await generatePostHeadersAndRequestData(
+            'POST',
+            '/v1/batch-order',
+            params,
+            this.config.orderlyKeyPrivate,
+            this.accountId,
+            this.config.orderlyKey,
+            this.config.tradingSecret,
+            this.config.tradingPublic,
           );
-
-          const invalidRows = Object.values(validationResults).filter(value => !value.success);
-
-          if (Object.entries(invalidRows).length > 0) {
-            throw new Error(JSON.stringify(invalidRows));
-          }
-
-          const signedParams: { orders: (CreateOrderRequest & { signature: string })[] } = {
-            orders: params.orders.map(order => ({ ...order, signature: '' })),
-          };
-
-          const { data: response } = await this.instance.post<CreateBatchOrderResponse>('batch-order', signedParams);
+          const { data: response } = await this.instance.post<CreateBatchOrderResponse>(
+            'batch-order',
+            { orders: requestData },
+            {
+              headers: headers,
+            },
+          );
 
           return response.data.rows;
         } catch (error) {
@@ -184,13 +197,26 @@ export class OrdersClient extends GenericClient {
             throw new Error('You need to pass either order_id or client_order_id param');
           }
 
-          const url = params.client_order_id ? 'client/order' : 'order';
+          const url = params.client_order_id ? '/client/order' : '/order';
 
-          const { data: response } = await this.instance.delete<CancelOrderResponse>(url, {
-            params: {
-              ...params,
-              signature: '',
-            },
+          const { headers, requestData } = await generatePostHeadersAndRequestData(
+            'DELETE',
+            `/v1${url}`,
+            params,
+            this.config.orderlyKeyPrivate,
+            this.accountId,
+            this.config.orderlyKey,
+            this.config.tradingSecret,
+            this.config.tradingPublic,
+            true,
+          );
+
+          console.log(headers);
+
+          const { data: response } = await axios.delete<CancelOrderResponse>(`${this.config.apiUrl}/${this.config.apiVersion}${url}`, {
+            headers,
+            params: requestData,
+            data: null
           });
 
           return response.data;
@@ -221,11 +247,21 @@ export class OrdersClient extends GenericClient {
       },
       cancelBatch: async params => {
         try {
+          const { headers, requestData } = await generatePostHeadersAndRequestData(
+            'DELETE',
+            '/v1/order',
+            params,
+            this.config.orderlyKeyPrivate,
+            this.accountId,
+            this.config.orderlyKey,
+            this.config.tradingSecret,
+            this.config.tradingPublic,
+            true,
+          );
+
           const { data: response } = await this.instance.delete<CancelOrderResponse>('orders', {
-            params: {
-              ...params,
-              signature: '',
-            },
+            params: requestData,
+            headers,
           });
 
           return response.data;
@@ -261,8 +297,18 @@ export class OrdersClient extends GenericClient {
           }
 
           const url = params.client_order_id ? `client/order/${params.client_order_id}` : `order/${params.order_id}`;
+          const headers = await generateGetHeaders(
+            'GET',
+            `/v1/order/${params.order_id ? params.order_id : params.client_order_id}`,
+            null,
+            this.config.orderlyKeyPrivate,
+            this.accountId,
+            this.config.orderlyKey,
+          );
 
-          const { data: response } = await this.instance.get<GetOrderResponse>(url);
+          const { data: response } = await this.instance.get<GetOrderResponse>(url, {
+            headers,
+          });
 
           return response.data;
         } catch (error) {
@@ -292,8 +338,19 @@ export class OrdersClient extends GenericClient {
       },
       getOrders: async params => {
         try {
-          const { data: response } = await this.instance.get<GetOrdersResponse>('orders', {
+          const headers = await generateGetHeaders(
+            'GET',
+            '/v1/orders',
             params,
+            this.config.orderlyKeyPrivate,
+            this.accountId,
+            this.config.orderlyKey,
+            true
+          );
+
+          const { data: response } = await this.instance.get<GetOrdersResponse>('/orders', {
+            params,
+            headers: headers,
           });
 
           return response.data.rows;
@@ -324,10 +381,21 @@ export class OrdersClient extends GenericClient {
       },
       getOrderbook: async (symbol, maxLevel = 100) => {
         try {
+          const headers = await generateGetHeaders(
+            'GET',
+            `/v1/orderbook/${symbol}`,
+            { max_level: maxLevel },
+            this.config.orderlyKeyPrivate,
+            this.accountId,
+            this.config.orderlyKey,
+            true,
+          );
+
           const { data: response } = await this.instance.get<GetOrderbookResponse>(`orderbook/${symbol}`, {
             params: {
               max_level: maxLevel,
             },
+            headers,
           });
 
           return response.data;

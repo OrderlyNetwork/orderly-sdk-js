@@ -6,6 +6,6 @@ export const FungibleTokenContractMethodsList = {
 };
 
 export interface FungibleTokenContractMethods {
-  get_tokens: (params: GetTokensRequest) => Promise<any>;
-  ft_transfer_call: (params: DepositFungibleTokenRequest) => Promise<any>;
+  get_tokens: (params: GetTokensRequest) => Promise<void>;
+  ft_transfer_call: (params: DepositFungibleTokenRequest) => Promise<void>;
 }

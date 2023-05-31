@@ -12,7 +12,7 @@ export interface DepositParams {
   /**
    * Amount of NEAR to deposit
    */
-  amount: number;
+  amount: number | string;
 }
 
 export type DepositRequest = CallMethodSignature<DepositParams>;

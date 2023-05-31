@@ -11,6 +11,8 @@ export interface CreateOrderRequest {
 
   client_order_id?: string;
 
+  broker_id?: string;
+
   order_type: keyof typeof OrderType;
 
   /**
@@ -21,7 +23,7 @@ export interface CreateOrderRequest {
   /**
    * For MARKET/ASK/BID order, if order_amount is given, it is not required
    */
-  order_quantity?: number;
+  order_quantity?: number | string;
 
   /**
    * For MARKET/ASK/BID order, the order size in terms of quote currency
@@ -31,7 +33,7 @@ export interface CreateOrderRequest {
   /**
    * The order quantity shown on orderbook. (default: equal to order_quantity)
    */
-  visible_quantity: number;
+  visible_quantity?: number;
 
   side: keyof typeof OrderSide;
 }
