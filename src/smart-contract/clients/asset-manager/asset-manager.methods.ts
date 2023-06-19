@@ -60,7 +60,7 @@ export interface AssetManagerContractMethods {
   get_user_trading_key: (params: UserKeyRequest) => Promise<string>;
   is_orderly_key_announced: (params: UserKeyRequest) => Promise<boolean>;
   is_trading_key_set: (params: UserKeyRequest) => Promise<boolean>;
-  user_storage_usage: (params: CallMethodSignature<{ user: string }>) => Promise<unknown>;
+  user_storage_usage: ({ user }) => Promise<unknown>;
   storage_cost_of_announce_key: (params: EmptyRequest) => Promise<unknown>;
   get_user_tokens_balances: ({ user}) => Promise<unknown>;
 }
