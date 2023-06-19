@@ -11,6 +11,7 @@ import {
 } from '../../interfaces/responses';
 import { FailedApiResponse, GenericClient } from '../../interfaces/utils';
 import { generateGetHeaders } from '../utils/generateHeaders';
+import { FundingRateHistoryPrivateRequest } from '../../interfaces/requests'
 
 export type TradeType = {
   /**
@@ -40,6 +41,8 @@ export type TradeType = {
    * @link https://docs-api.orderly.network/#get-trade
    */
   getTrade: (tradeId: number) => Promise<OrderTrade>;
+
+  getFundingFeeHistory: (params: FundingRateHistoryPrivateRequest) => Promise<any>;
 };
 
 export class TradeClient extends GenericClient {
@@ -134,6 +137,48 @@ export class TradeClient extends GenericClient {
             this.logger.error(err.toJSON(), 'Get order trades failed');
           } else {
             this.logger.error(error.message, 'Get order trades failed');
+          }
+
+          throw error;
+        }
+      },
+      getFundingFeeHistory: async params => {
+        try {
+          const headers = await generateGetHeaders(
+            'GET',
+            '/v1/funding_fee/history',
+            params,
+            this.config.orderlyKeyPrivate,
+            this.accountId,
+            this.config.orderlyKey,
+            params ? true : false
+          );
+          const { data: response } = await this.instance.get<GetTradesResponse>('funding_fee/history', {
+            params,
+            headers,
+          });
+
+          return response.data.rows;
+        } catch (error) {
+          if (error instanceof AxiosError) {
+            const err = error as AxiosError<FailedApiResponse>;
+
+            if (err.response) {
+              const { data } = err.response;
+
+              this.logger.error(`getFundingFeeHistory failed: ${data.message}`);
+
+              throw new Error(
+                JSON.stringify({
+                  code: data.code,
+                  message: data.message,
+                }),
+              );
+            }
+
+            this.logger.error(err.toJSON(), 'getFundingFeeHistory failed');
+          } else {
+            this.logger.error(error.message, 'getFundingFeeHistory failed');
           }
 
           throw error;

@@ -89,8 +89,12 @@ export class AuthClient {
     return this.smartContractClient.contractClient();
   }
 
-  public wsClient() {
-    return this.smartContractClient.wsClient();
+  public wsClientPublic() {
+    return this.smartContractClient.initPublicWs(this.config.networkId, 'OqdphuyCtYWxwzhxyLLjOWNdFP7sQt8RPWzmb5xY');
+  }
+
+  public wsClientPrivate() {
+    return this.smartContractClient.wsPrivateClient();
   }
 
   /**

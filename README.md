@@ -153,6 +153,22 @@ _Path: `<Asset Manager Contract Client Instance>.<method (described above)>`_
   ```ts
     await contract.getUserTokenBalance('user.near')
   ```
+
+* `storageBalanceOf` - this method is used to get storage balance of user. 
+  | Parameter name | Type | Is required? | Description |
+  | --- | :---: | :---: | --- |
+  | `accountId` | `string` | Yes | Account id of user |
+  ```ts
+    await contract.storageBalanceOf(accountId)
+  ```
+
+* `storageUsageOf` - this method is used to get storage usage of user. 
+  | Parameter name | Type | Is required? | Description |
+  | --- | :---: | :---: | --- |
+  | `accountId` | `string` | Yes | Account id of user |
+  ```ts
+    await contract.storageUsageOf(accountId)
+  ```
   
   **Parameters:** _None_
 ### Fungible token contract

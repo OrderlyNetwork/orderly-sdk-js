@@ -141,6 +141,14 @@ export class AssetManagerClient extends GenericSmartContractClient<AssetManagerC
     });
   }
 
+  storageBalanceOf(accountId) {
+    return this.getContract().storage_balance_of({account_id: accountId});
+  }
+
+  storageUsageOf(accountId: string) {
+    return this.getContract().user_storage_usage({user: accountId});
+  }
+
   get storage(): AssetManagerStorageType {
     return {
       deposit: async amount => {

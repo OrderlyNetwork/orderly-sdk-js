@@ -13,7 +13,8 @@ import { RestClient } from '../rest';
 import { AssetManagerClient } from './clients/asset-manager/asset-manager.client';
 import { AssetManagerContractMethodsList } from './clients/asset-manager/asset-manager.methods';
 import { FungibleTokenClient } from './clients/fungible-token/fungible-token.client';
-import { WebSocketManager } from '../ws/index';
+import { WebSocketManager as PrivateWs } from '../ws/private';
+import { WebSocketManager as PublicWs } from '../ws/public';
 import { environment } from './enviroment';
 import { PublicClient } from '../rest/clients/public.client';
 import { RestAPIUrl, RestApiVersion } from '../enums';
@@ -27,7 +28,8 @@ export class SmartContractClient extends GenericClient {
   public sdk: RestClient;
   public sc: AssetManagerClient;
   public ft: FungibleTokenClient;
-  public ws: any;
+  public wsPrivate: any;
+  public wsPublic: any;
 
   constructor(private config?: SdkConfigurationOptionsClient) {
     super('Smart Contract Client', config.debug);
@@ -175,7 +177,7 @@ export class SmartContractClient extends GenericClient {
       this.sdk = new RestClient(sdkOptions);
       this.sc = new AssetManagerClient(sdkOptions, this.account, this.contract, this.wallet);
       this.ft = new FungibleTokenClient(this.wallet, accountId, this.config.networkId);
-      this.ws = new WebSocketManager(sdkOptions);
+      this.wsPrivate = new PrivateWs(sdkOptions);
       this.walletRef = this.wallet;
       console.log(this.walletRef);
       await this.sc.connect();
@@ -188,6 +190,10 @@ export class SmartContractClient extends GenericClient {
     return this.walletRef?.nearAccountId;
   }
 
+  public publicWs() {
+    
+  }
+
   public publicClient() {
     const apiUrl = RestAPIUrl[this.config.networkId];
     const apiVersion = RestApiVersion['v1']
@@ -198,8 +204,17 @@ export class SmartContractClient extends GenericClient {
     return this.sdk;
   }
 
-  public wsClient() {
-    return this.ws;
+  public initPublicWs(network, accountId) {
+    this.wsPublic = new PublicWs(network, accountId)
+    return this.wsPublic;
+  }
+
+  public wsPublicClient() {
+    return this.wsPublic;
+  }
+
+  public wsPrivateClient() {
+    return this.wsPrivate;
   }
 
   public ftClient() {
