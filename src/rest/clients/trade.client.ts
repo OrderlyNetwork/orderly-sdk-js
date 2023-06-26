@@ -10,8 +10,8 @@ import {
   GetTradesResponse,
 } from '../../interfaces/responses';
 import { FailedApiResponse, GenericClient } from '../../interfaces/utils';
-import { generateGetHeaders } from '../utils/generateHeaders';
-import { FundingRateHistoryPrivateRequest } from '../../interfaces/requests'
+import { generateGetHeaders, generatePostHeadersAndRequestData } from '../utils/generateHeaders';
+import { FundingRateHistoryPrivateRequest, FundingRateHistoryOneMarketRequest, ClaimLiquidatedPositionRequest } from '../../interfaces/requests'
 
 export type TradeType = {
   /**
@@ -43,6 +43,11 @@ export type TradeType = {
   getTrade: (tradeId: number) => Promise<OrderTrade>;
 
   getFundingFeeHistory: (params: FundingRateHistoryPrivateRequest) => Promise<any>;
+  getAllPositionInfo: () => Promise<any>;
+  getOnePositionInfo: (symbol: string) => Promise<any>;
+  getLiquidatedPositionsByLiquidator: (params: FundingRateHistoryOneMarketRequest) => Promise<any>;
+  getLiquidatedPositionsOfAccount: (params: FundingRateHistoryPrivateRequest) => Promise<any>;
+  claimLiquidatedPosition: (params: ClaimLiquidatedPositionRequest) => Promise<any>;
 };
 
 export class TradeClient extends GenericClient {
@@ -179,6 +184,217 @@ export class TradeClient extends GenericClient {
             this.logger.error(err.toJSON(), 'getFundingFeeHistory failed');
           } else {
             this.logger.error(error.message, 'getFundingFeeHistory failed');
+          }
+
+          throw error;
+        }
+      },
+      getAllPositionInfo: async () => {
+        try {
+          const headers = await generateGetHeaders(
+            'GET',
+            '/v1/positions',
+            null,
+            this.config.orderlyKeyPrivate,
+            this.accountId,
+            this.config.orderlyKey,
+          );
+          const { data: response } = await this.instance.get<GetTradesResponse>('positions', {
+            headers,
+          });
+
+          return response.data.rows;
+        } catch (error) {
+          if (error instanceof AxiosError) {
+            const err = error as AxiosError<FailedApiResponse>;
+
+            if (err.response) {
+              const { data } = err.response;
+
+              this.logger.error(`getAllPositionInfo failed: ${data.message}`);
+
+              throw new Error(
+                JSON.stringify({
+                  code: data.code,
+                  message: data.message,
+                }),
+              );
+            }
+
+            this.logger.error(err.toJSON(), 'getAllPositionInfo failed');
+          } else {
+            this.logger.error(error.message, 'getAllPositionInfo failed');
+          }
+
+          throw error;
+        }
+      },
+      getOnePositionInfo: async symbol => {
+        try {
+          const headers = await generateGetHeaders(
+            'GET',
+            `/v1/position/${symbol}`,
+            null,
+            this.config.orderlyKeyPrivate,
+            this.accountId,
+            this.config.orderlyKey
+          );
+          const { data: response } = await this.instance.get<GetTradesResponse>(`position/${symbol}`, {
+            headers,
+          });
+
+          return response.data.rows;
+        } catch (error) {
+          if (error instanceof AxiosError) {
+            const err = error as AxiosError<FailedApiResponse>;
+
+            if (err.response) {
+              const { data } = err.response;
+
+              this.logger.error(`getOnePositionInfo failed: ${data.message}`);
+
+              throw new Error(
+                JSON.stringify({
+                  code: data.code,
+                  message: data.message,
+                }),
+              );
+            }
+
+            this.logger.error(err.toJSON(), 'getOnePositionInfo failed');
+          } else {
+            this.logger.error(error.message, 'getOnePositionInfo failed');
+          }
+
+          throw error;
+        }
+      },
+      getLiquidatedPositionsByLiquidator: async params => {
+        try {
+          const headers = await generateGetHeaders(
+            'GET',
+            '/v1/client/liquidator_liquidations',
+            params,
+            this.config.orderlyKeyPrivate,
+            this.accountId,
+            this.config.orderlyKey,
+            true,
+          );
+          const { data: response } = await this.instance.get<GetTradesResponse>('client/liquidator_liquidations', {
+            params,
+            headers,
+          });
+
+          return response.data.rows;
+        } catch (error) {
+          if (error instanceof AxiosError) {
+            const err = error as AxiosError<FailedApiResponse>;
+
+            if (err.response) {
+              const { data } = err.response;
+
+              this.logger.error(`getLiquidatedPositionsByLiquidator failed: ${data.message}`);
+
+              throw new Error(
+                JSON.stringify({
+                  code: data.code,
+                  message: data.message,
+                }),
+              );
+            }
+
+            this.logger.error(err.toJSON(), 'getLiquidatedPositionsByLiquidator failed');
+          } else {
+            this.logger.error(error.message, 'getLiquidatedPositionsByLiquidator failed');
+          }
+
+          throw error;
+        }
+      },
+      getLiquidatedPositionsOfAccount: async params => {
+        try {
+          const headers = await generateGetHeaders(
+            'GET',
+            '/v1/liquidations',
+            params,
+            this.config.orderlyKeyPrivate,
+            this.accountId,
+            this.config.orderlyKey,
+            params ? true : false
+          );
+          const { data: response } = await this.instance.get<GetTradesResponse>('liquidations', {
+            params,
+            headers,
+          });
+
+          return response.data.rows;
+        } catch (error) {
+          if (error instanceof AxiosError) {
+            const err = error as AxiosError<FailedApiResponse>;
+
+            if (err.response) {
+              const { data } = err.response;
+
+              this.logger.error(`getFundingFeeHistory failed: ${data.message}`);
+
+              throw new Error(
+                JSON.stringify({
+                  code: data.code,
+                  message: data.message,
+                }),
+              );
+            }
+
+            this.logger.error(err.toJSON(), 'getFundingFeeHistory failed');
+          } else {
+            this.logger.error(error.message, 'getFundingFeeHistory failed');
+          }
+
+          throw error;
+        }
+      },
+      claimLiquidatedPosition: async params => {
+        try {
+
+          const { headers, requestData } = await generatePostHeadersAndRequestData(
+            'POST',
+            '/v1/liquidation',
+            params,
+            this.config.orderlyKeyPrivate,
+            this.accountId,
+            this.config.orderlyKey,
+            this.config.tradingSecret,
+            this.config.tradingPublic,
+          );
+          const { data: response } = await this.instance.post(
+            'liquidation',
+             requestData,
+            {
+              headers: headers,
+            },
+          );
+
+          return response.data.rows;
+        } catch (error) {
+          if (error instanceof AxiosError) {
+            const err = error as AxiosError<FailedApiResponse>;
+
+            if (err.response) {
+              const { data } = err.response;
+
+              this.logger.error(`claimLiquidatedPosition failed: ${data.message}`);
+
+              throw new Error(
+                JSON.stringify({
+                  code: data.code,
+                  message: data.message,
+                }),
+              );
+            }
+
+            this.logger.error(err.toJSON(), 'claimLiquidatedPosition failed');
+          } else {
+            this.logger.error(error.message, 'claimLiquidatedPosition failed');
           }
 
           throw error;

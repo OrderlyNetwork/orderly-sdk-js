@@ -10,6 +10,8 @@ Library is written fully in Typescript, so no additional types installation is n
 1. `contractsApi` - asset manager smart contract client;
 2. `ftClient` - fungible token smart contract client;
 3. `restApi` - REST API client.
+4. `wsPublic` - Publis WebSocket. Wallet connection not required.
+5. `wsPrivate` - 
 
 ### Initialization
 To initialize these clients you will need:
@@ -74,6 +76,75 @@ const authClient = new AuthClient({
 });
 
 const nearApi = authClient.nearJsApi
+```
+
+### Public WebSocket
+Note: When user not connected you can use public key for wsPublic 
+`bf6eb263984c964a0cda3e9a35aa486268eea085d9b90fe792c8f9ad7e129a2c`
+
+```js
+    const [wsClientPublic, setWsClientPublic] = useState(null);
+
+    const initPublicWs = () => {
+      const authClient = new AuthClient({
+        networkId: 'testnet',
+        contractId: 'asset-manager.orderly.testnet',
+        debug: true
+      });
+
+      const publicKeyOrWalletID = 'bf6eb263984c964a0cda3e9a35aa486268eea085d9b90fe792c8f9ad7e129a2c'
+
+      const wsPublic = authClient.wsClientPublic('testnet', publicKeyOrWalletID);
+      wsPublic.connect();
+      setWsClientPublic(wsPublic)
+    }
+
+    const subscribe = () => {
+      const subscription = { id: 'client_id1', event: 'subscribe', topic: 'SPOT_WOO_USDC@trade' };
+      wsClientPublic.sendSubscription(subscription);
+    }
+
+    const setPublicWsCallback = () => {
+      wsClientPublic.setMessageCallback((message) => {
+        // Process the received message
+        console.log('Received data:', message);
+      });
+    }
+```
+
+### Private WebSocket
+Required wallet connection
+
+```js
+    const [wsClientPrivate, setWsClientPrivate] = useState(null);
+
+    const initPrivateWs = async () => {
+      const authClient = new AuthClient({
+        networkId: 'testnet',
+        contractId: 'asset-manager.orderly.testnet',
+        debug: true
+      });
+
+      const wsPrivate = await authClient.wsClientPrivate();
+      await wsPrivate.connectPrivate();
+      setWsClientPrivate(wsPrivate);
+    }
+
+    const subscribePrivate = () => {
+      const subscription = {
+        "id": "123r",
+        "topic": "balance",
+        "event": "subscribe"
+      }
+      wsClientPrivate.sendPrivateSubscription(subscription);
+    }
+
+    const setPublicWsCallback = () => {
+      wsClientPrivate.setPrivateMessageCallback((message) => {
+        // Process the received message
+        console.log('Received data:', message);
+      });
+    }
 ```
 
 
@@ -145,6 +216,10 @@ _Path: `<Asset Manager Contract Client Instance>.<method (described above)>`_
 * `getPossibleTokens` - this method is used to get all whitelisted tokens for your account on the contract.
   ```ts
     await contract.getPossibleTokens()
+  ```
+* `userRequestSettlement` - Public payable method enabling the user to request to settle the account's futures positions PnL.
+  ```ts
+    await contract.userRequestSettlement()
   ```
 * `getUserTokenBalance` - this method is used to check account tokens balance.
   | Parameter name | Type | Is required? | Description |
@@ -220,6 +295,135 @@ REST client consists of the next clients:
   ```ts
     await api.public.getMarketTrades('SPOT_NEAR_USDC', 10)
   ```
+
+- `getPredictedFundingRateForAll` - get predicted funding rate for all.
+  
+  Get the:
+   - `last_funding_rate` : latest hourly funding rate for all the markets for the last funding period (dt = 60s)
+   - `last_average_funding_rate` : average of all funding rates on the last hour (ex: 10am-11am)
+   - `est_funding_rate` : rolling average of all funding rates over the last hour (ex: current time - 1hour : 10:15 -11:15 am)
+
+  ```ts
+    await api.public.getPredictedFundingRateForAll()
+  ```
+
+- `getPredictedFundingRateForOne` - get predicted funding rate for symbol.
+  
+  | Parameter name | Type | Is required? | Description |
+  | --- | :---: | :---: | --- |
+  | `symbol` | `string` | Yes | For which symbol to get funding rate |
+  ```ts
+    await api.public.getPredictedFundingRateForOne('PERP_BTC_USDT')
+  ```
+
+- `getFundingRateHistoryForOneMarket` - Get funding rate for one market.
+  
+  | Parameter name | Type | Is required? | Description |
+  | --- | :---: | :---: | --- |
+  | `symbol` | `string` | Yes | For which symbol to get funding rate |
+  | `start_t` | `timestamp` | No | start time range that you wish to query, noted that the time stamp is a 13-digits timestamp. If start_t and end_t are not filled, the newest funding rate will be returned. |
+  | `end_t` | `timestamp` | No | end time range that you wish to query, noted that the time stamp is a 13-digits timestamp. If start_t and end_t are not filled, the newest funding rate will be returned. |
+  | `page` | `number` | No | the page you wish to query. |
+  | `size` | `number` | No | Default: 60 |
+
+  ```ts
+
+    const payload = {
+      symbol: 'PERP_BTC_USDC',
+      page: 1,
+      size: 5
+    }
+
+    await api.public.getFundingRateHistoryForOneMarket(payload)
+  ```
+
+- `getFundingRateHistoryPerHourForOneMarket` - Get average funding rate per hour for one market.
+  
+  Put a limit to the time window : if between start_t and end_t , the number of data is larger than limit, return data from start_t to start_t +
+limit.
+
+  | Parameter name | Type | Is required? | Description |
+  | --- | :---: | :---: | --- |
+  | `symbol` | `string` | Yes | For which symbol to get funding rate |
+  | `start_t` | `timestamp` | No | start time range that you wish to query, noted that the time stamp is a 13-digits timestamp. If start_t and end_t are not filled, the newest funding rate will be returned. |
+  | `end_t` | `timestamp` | No | end time range that you wish to query, noted that the time stamp is a 13-digits timestamp. If start_t and end_t are not filled, the newest funding rate will be returned. |
+  | `page` | `number` | No | the page you wish to query. |
+  | `size` | `number` | No | Default: 60 |
+
+  ```ts
+
+    const payload = {
+      symbol: 'PERP_BTC_USDC',
+      page: 1,
+      size: 5
+    }
+
+    await api.public.getFundingRateHistoryPerHourForOneMarket(payload)
+  ```
+
+- `getFuturesInfoForAllMarkets` - Get basic futures information for all the markets.
+
+  ```ts
+    await api.public.getFuturesInfoForAllMarkets()
+  ```
+
+- `getFuturesForOneMarket` - Get basic futures information for one market.
+  
+  | Parameter name | Type | Is required? | Description |
+  | --- | :---: | :---: | --- |
+  | `symbol` | `string` | Yes | For which symbol to get futures information |
+  ```ts
+    await api.public.getFuturesForOneMarket('PERP_BTC_USDT')
+  ```
+
+- `getPositionsUnderLiquidation` - Get positions under liquidation.
+  
+  ```ts
+    await api.public.getPositionsUnderLiquidation()
+  ```
+
+- `getPositionsUnderLiquidationPerPerpMarket` - Get positions under liquidation by symbol.
+  
+  | Parameter name | Type | Is required? | Description |
+  | --- | :---: | :---: | --- |
+  | `symbol` | `string` | Yes | For which symbol to get information |
+  ```ts
+    await api.public.getPositionsUnderLiquidationPerPerpMarket('PERP_BTC_USDT')
+  ```
+
+- `getLiquidatedPositionsInfo` - Get liquidated positions info.
+  
+
+  | Parameter name | Type | Is required? | Description |
+  | --- | :---: | :---: | --- |
+  | `symbol` | `string` | Yes | For which symbol to get info |
+  | `start_t` | `timestamp` | No | start time range that you wish to query, noted that the time stamp is a 13-digits timestamp. If start_t and end_t are not filled, the newest funding rate will be returned. |
+  | `end_t` | `timestamp` | No | end time range that you wish to query, noted that the time stamp is a 13-digits timestamp. If start_t and end_t are not filled, the newest funding rate will be returned. |
+  | `page` | `number` | No | the page you wish to query. |
+  | `size` | `number` | No | Default: 60 |
+
+  ```ts
+
+    const payload = {
+      symbol: 'PERP_BTC_USDC',
+      page: 1,
+      size: 5
+    }
+
+    await api.public.getLiquidatedPositionsInfo(payload)
+  ```
+
+- `getInsuranceFundInfo` - Get insurance fund info.
+  
+  ```ts
+    await api.public.getInsuranceFundInfo()
+  ```
+
+- `getFuturesFeeInformation` - Get the current Orderly Network fee structure.
+  
+  ```ts
+    await api.public.getFuturesFeeInformation()
+
 #### Orders client
 - `create` - place order.
   | Parameter name | Type | Is required? | Description |
@@ -359,6 +563,91 @@ REST client consists of the next clients:
   | `tradeId` |	`number` | Yes |	ID of the trade |
   ```ts
     await api.trade.getTrade(54321)
+  ```
+- `getFundingFeeHistory` - Get funding fee history.
+  Put a limit to the time window : if between start_t and end_t , the number of data is larger than limit, return data from start_t to start_t +
+  limit.
+  - Max (24h) = 8640
+  - Default (3 hour of data)= 1080
+
+  | Parameter name | Type | Is required? | Description |
+  | --- | :---: | :---: | --- |
+  | `symbol` | `string` | Yes | For which symbol to get funding rate |
+  | `start_t` | `timestamp` | No | start time range that you wish to query, noted that the time stamp is a 13-digits timestamp. If start_t and end_t are not filled, the newest funding rate will be returned. |
+  | `end_t` | `timestamp` | No | end time range that you wish to query, noted that the time stamp is a 13-digits timestamp. If start_t and end_t are not filled, the newest funding rate will be returned. |
+  | `page` | `number` | No | the page you wish to query. |
+  | `size` | `number` | No | Default: 60 |
+  ```ts
+    const payload = {
+      symbol: 'PERP_BTC_USDC',
+      page: 1,
+      size: 5
+    }
+    await api.trade.getFundingFeeHistory(payload)
+  ```
+
+- `getLiquidatedPositionsByLiquidator` - Get liquidated positions by Liquidator.
+
+  | Parameter name | Type | Is required? | Description |
+  | --- | :---: | :---: | --- |
+  | `symbol` | `string` | Yes | For which symbol to get |
+  | `start_t` | `timestamp` | No | start time range that you wish to query, noted that the time stamp is a 13-digits timestamp. If start_t and end_t are not filled, the newest funding rate will be returned. |
+  | `end_t` | `timestamp` | No | end time range that you wish to query, noted that the time stamp is a 13-digits timestamp. If start_t and end_t are not filled, the newest funding rate will be returned. |
+  | `page` | `number` | No | the page you wish to query. |
+  | `size` | `number` | No | Default: 60 |
+  ```ts
+    const payload = {
+      symbol: 'PERP_BTC_USDC',
+      page: 1,
+      size: 5
+    }
+    await api.trade.getLiquidatedPositionsByLiquidator(payload)
+  ```
+
+- `getLiquidatedPositionsOfAccount` - Get liquidated positions by Liquidator.
+
+  | Parameter name | Type | Is required? | Description |
+  | --- | :---: | :---: | --- |
+  | `symbol` | `string` | No | For which symbol to get|
+  | `start_t` | `timestamp` | No | start time range that you wish to query, noted that the time stamp is a 13-digits timestamp. |
+  | `end_t` | `timestamp` | No | end time range that wish to query, noted the time stamp is 13-digits timestamp. |
+  | `page` | `number` | No | the page you wish to query. |
+  | `size` | `number` | No | the page size you wish to query. (max: 500) |
+  ```ts
+    const payload = {
+      symbol: 'PERP_BTC_USDC',
+      page: 1,
+      size: 5
+    }
+    await api.trade.getLiquidatedPositionsOfAccount(payload)
+  ```
+
+- `claimLiquidatedPosition` - claim liquidated position.
+
+  | Parameter name | Type | Is required? | Description |
+  | --- | :---: | :---: | --- |
+  | `liquidation_id ` | `number` | Yes | ID |
+  | `ratio_qty_request` | `number` | Yes | What ratio of the available liquidated position quantities liquidator is claiming (max 100%) |
+  | `extra_liquidation_ratio` | `number` | No | Range between [0-1]. Only if ratio_qty_request is equal to 100% : this represents the extra ratio the liquidator is ready to claim in case the real position quantities to be liquidated at the real time mark price is higher than the ones posted on endpoints.|
+
+  ```ts
+    const payload = {
+      liquidation_id: 123,
+      ratio_qty_request: 1,
+    }
+    await api.trade.claimLiquidatedPosition(payload)
+  ```
+- `getAllPositionInfo` - get all positions info.
+  ```ts
+    await api.trade.getAllPositionInfo(54321)
+  ```
+
+- `getOnePositionInfo` - get position info by symbop.
+  | Parameter name | Type | Is required? | Description |
+  | --- | :---: | :---: | --- |
+  | `symbol` |	`string` | Yes |	For which symbol to get |
+  ```ts
+    await api.trade.getOnePositionInfo('PERP_BTC_USDC')
   ```
 #### User client
 - `getCurrentHolding` - get holding summary of the user.
