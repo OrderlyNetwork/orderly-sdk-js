@@ -9,4 +9,4 @@ export * from './get-orders.request';
 export * from './get-trades.request';
 export * from './funding-rate-history-one-market';
 export * from './funding-rate-history-private';
-
+export * from './claim-liquidated-position';

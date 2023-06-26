@@ -22,7 +22,7 @@ export const AssetManagerContractMethodsList = {
     'is_orderly_key_announced',
     'is_trading_key_set',
     'storage_cost_of_announce_key',
-    'get_user_tokens_balances'
+    'get_user_tokens_balances',
   ],
   changeMethods: [
     // Authentication/registration
@@ -35,7 +35,8 @@ export const AssetManagerContractMethodsList = {
     'user_request_withdraw',
     'storage_withdraw',
     'storage_unregister',
-    // Data access
+    // Perps
+    'user_request_settlement'
   ],
 };
 
@@ -63,4 +64,5 @@ export interface AssetManagerContractMethods {
   user_storage_usage: ({ user }) => Promise<unknown>;
   storage_cost_of_announce_key: (params: EmptyRequest) => Promise<unknown>;
   get_user_tokens_balances: ({ user}) => Promise<unknown>;
+  user_request_settlement: (params: EmptyRequest) => Promise<unknown>;
 }

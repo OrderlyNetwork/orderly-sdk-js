@@ -141,6 +141,16 @@ export class AssetManagerClient extends GenericSmartContractClient<AssetManagerC
     });
   }
 
+  async userRequestSettlement() {
+    await this.wallet.callMethod(
+      environment(this.networkId).nearWalletConfig.contractName,
+      'user_request_settlement',
+      {},
+      '100000000000000',
+      '1',
+    );
+  }
+
   storageBalanceOf(accountId) {
     return this.getContract().storage_balance_of({account_id: accountId});
   }

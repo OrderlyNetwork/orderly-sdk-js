@@ -48,7 +48,7 @@ export type PublicType = {
   getFuturesForOneMarket: (symbol: string) => Promise<any>;
   getPositionsUnderLiquidation: () => Promise<any>;
   getPositionsUnderLiquidationPerPerpMarket: (symbol: string) => Promise<any>;
-  getLiquidatedPositionsInfo: () => Promise<any>;
+  getLiquidatedPositionsInfo: (params: FundingRateHistoryOneMarketRequest) => Promise<any>;
   getInsuranceFundInfo: () => Promise<any>;
   getFuturesFeeInformation: () => Promise<any>;
  };
@@ -306,9 +306,9 @@ export class PublicClient extends GenericClient {
           throw error;
         }
       },
-      getLiquidatedPositionsInfo: async () => {
+      getLiquidatedPositionsInfo: async params => {
         try {
-          const { data: response } = await this.instance.get(`public/liquidated_positions`)
+          const { data: response } = await this.instance.get(`public/liquidated_positions`, {params})
 
           return response.data;
         } catch (error) {
