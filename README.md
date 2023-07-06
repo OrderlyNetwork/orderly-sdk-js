@@ -11,7 +11,7 @@ Library is written fully in Typescript, so no additional types installation is n
 2. `ftClient` - fungible token smart contract client;
 3. `restApi` - REST API client.
 4. `wsPublic` - Publis WebSocket. Wallet connection not required.
-5. `wsPrivate` - 
+5. `wsPrivate` - Private WebSocket. Wallet connection required.
 
 ### Initialization
 To initialize these clients you will need:

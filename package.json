@@ -1,6 +1,6 @@
 {
   "name": "@orderly.network/orderly-sdk",
-  "version": "1.1.10",
+  "version": "1.1.11",
   "description": "Orderly SDK is a complete library to interact with Orderly contracts. You can use it in the browser, or in Node.js runtime. Orderly contracts are built on NEAR network.",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
