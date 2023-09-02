@@ -11,7 +11,12 @@ import {
 } from '../../interfaces/responses';
 import { FailedApiResponse, GenericClient } from '../../interfaces/utils';
 import { generateGetHeaders, generatePostHeadersAndRequestData } from '../utils/generateHeaders';
-import { FundingRateHistoryPrivateRequest, FundingRateHistoryOneMarketRequest, ClaimLiquidatedPositionRequest } from '../../interfaces/requests'
+import {
+  FundingRateHistoryPrivateRequest,
+  FundingRateHistoryOneMarketRequest,
+  ClaimLiquidatedPositionRequest,
+} from '../../interfaces/requests';
+import { LeverageType } from '../../enums/leverage.enum';
 
 export type TradeType = {
   /**
@@ -42,6 +47,13 @@ export type TradeType = {
    */
   getTrade: (tradeId: number) => Promise<OrderTrade>;
 
+  /**
+   * Choose maximum leverage for futures mode. Can only be one of 1,2,3,4,5,10
+   *
+   * @link https://docs-api.orderly.network/#restful-api-private-update-leverage-setting
+   */
+  setLeverage: (leverage: LeverageType) => Promise<any>;
+
   getFundingFeeHistory: (params: FundingRateHistoryPrivateRequest) => Promise<any>;
   getAllPositionInfo: () => Promise<any>;
   getOnePositionInfo: (symbol: string) => Promise<any>;
@@ -53,7 +65,11 @@ export type TradeType = {
 export class TradeClient extends GenericClient {
   private instance: AxiosInstance;
 
-  constructor(private config: AuthorizedConfigurationOptions, private accountId: string, debug = false) {
+  constructor(
+    private config: AuthorizedConfigurationOptions,
+    private accountId: string,
+    debug = false,
+  ) {
     super('Trade REST Client', debug);
 
     this.instance = axios.create({
@@ -156,7 +172,7 @@ export class TradeClient extends GenericClient {
             this.config.orderlyKeyPrivate,
             this.accountId,
             this.config.orderlyKey,
-            params ? true : false
+            params ? true : false,
           );
           const { data: response } = await this.instance.get<GetTradesResponse>('funding_fee/history', {
             params,
@@ -237,7 +253,7 @@ export class TradeClient extends GenericClient {
             null,
             this.config.orderlyKeyPrivate,
             this.accountId,
-            this.config.orderlyKey
+            this.config.orderlyKey,
           );
           const { data: response } = await this.instance.get<GetTradesResponse>(`position/${symbol}`, {
             headers,
@@ -320,7 +336,7 @@ export class TradeClient extends GenericClient {
             this.config.orderlyKeyPrivate,
             this.accountId,
             this.config.orderlyKey,
-            params ? true : false
+            params ? true : false,
           );
           const { data: response } = await this.instance.get<GetTradesResponse>('liquidations', {
             params,
@@ -355,7 +371,6 @@ export class TradeClient extends GenericClient {
       },
       claimLiquidatedPosition: async params => {
         try {
-
           const { headers, requestData } = await generatePostHeadersAndRequestData(
             'POST',
             '/v1/liquidation',
@@ -366,13 +381,9 @@ export class TradeClient extends GenericClient {
             this.config.tradingSecret,
             this.config.tradingPublic,
           );
-          const { data: response } = await this.instance.post(
-            'liquidation',
-             requestData,
-            {
-              headers: headers,
-            },
-          );
+          const { data: response } = await this.instance.post('liquidation', requestData, {
+            headers: headers,
+          });
 
           return response.data.rows;
         } catch (error) {
@@ -477,6 +488,47 @@ export class TradeClient extends GenericClient {
             this.logger.error(error.message, 'Get trades failed');
           }
 
+          throw error;
+        }
+      },
+      setLeverage: async leverage => {
+        try {
+          const { headers, requestData } = await generatePostHeadersAndRequestData(
+            'POST',
+            '/v1/client/leverage',
+            { leverage },
+            this.config.orderlyKeyPrivate,
+            this.accountId,
+            this.config.orderlyKey,
+            this.config.tradingSecret,
+            this.config.tradingPublic,
+          );
+          const { data: response } = await this.instance.post('/client/leverage', requestData, {
+            headers: headers,
+          });
+
+          return response;
+        } catch (error) {
+          if (error instanceof AxiosError) {
+            const err = error as AxiosError<FailedApiResponse>;
+
+            if (err.response) {
+              const { data } = err.response;
+
+              this.logger.error(`setLeverage failed: ${data.message}`);
+
+              throw new Error(
+                JSON.stringify({
+                  code: data.code,
+                  message: data.message,
+                }),
+              );
+            }
+
+            this.logger.error(err.toJSON(), 'setLeverage failed');
+          } else {
+            this.logger.error(error.message, 'setLeverage failed');
+          }
           throw error;
         }
       },
