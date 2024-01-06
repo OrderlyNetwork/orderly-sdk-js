@@ -104,7 +104,7 @@ export class TradeClient extends GenericClient {
             if (err.response) {
               const { data } = err.response;
 
-              this.logger.error(`Get orders failed: ${data.message}`);
+              this.logger.error(`Get kline failed: ${data.message}`);
 
               throw new Error(
                 JSON.stringify({
@@ -114,9 +114,9 @@ export class TradeClient extends GenericClient {
               );
             }
 
-            this.logger.error(err.toJSON(), 'Get orders failed');
+            this.logger.error(err.toJSON(), 'Get kline failed');
           } else {
-            this.logger.error(error.message, 'Get orders failed');
+            this.logger.error(error.message, 'Get kline failed');
           }
 
           throw error;
