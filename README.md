@@ -642,7 +642,7 @@ limit.
     await api.trade.getAllPositionInfo(54321)
   ```
 
-- `getOnePositionInfo` - get position info by symbop.
+- `getOnePositionInfo` - get position info by symbol.
   | Parameter name | Type | Is required? | Description |
   | --- | :---: | :---: | --- |
   | `symbol` |	`string` | Yes |	For which symbol to get |
